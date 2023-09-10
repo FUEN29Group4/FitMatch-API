@@ -22,6 +22,20 @@ public partial class Class
     public DateTime? BuildTime { get; set; }
 
     public string CourseStatus { get; set; }
+    //public List<Member> Members { get; set; }
+
+    //public List<Gym> Gyms { get; set; }
+    //public List<ClassType> ClassTypes { get; set; }
+    //public List<Trainer> Trainers { get; set; }
+
+
+    //public Class()
+    //{
+    //    Trainers=new List<Trainer>();
+    //    Members = new List<Member>();
+    //    Gyms = new List<Gym>();
+    //    ClassTypes = new List<ClassType>();
+    //}
 
 
 }
