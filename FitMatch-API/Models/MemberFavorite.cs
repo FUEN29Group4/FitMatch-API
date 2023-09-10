@@ -15,13 +15,7 @@ public partial class MemberFavorite
 
     public string? Introduce { get; set; }
 
-    public List<Trainer> Trainers { get; set; }
-
-    public List<Product> Products { get; set; }
-
-    public List<Member> Members { get; set; }
-
-    public List<Order> Orders { get; set; }
+   
 
 
     //public int TrainerId { get; set; }
@@ -43,10 +37,13 @@ public partial class MemberFavorite
 
     public int? TotalPrice { get; set; }//訂單總價
 
-    public MemberFavorite()
-    {
-        Trainers = new List<Trainer>();
+    public List<Trainer> Trainers { get; set; } = new List<Trainer>();
 
-        Products = new List<Product>();
-    }
+    public List<Product> Products { get; set; } = new List<Product>();
+
+    public List<Member> Members { get; set; }
+     = new List<Member>();
+
+    public List<Order> Orders { get; set; }
+     = new List<Order>();
 }

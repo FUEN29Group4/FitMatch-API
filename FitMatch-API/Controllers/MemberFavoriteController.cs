@@ -43,156 +43,100 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        //查找所有與特定MemberID相關的MemberFavorite、Trainers和Product的資料。
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMemberFavorites(int id)
         {
-            const string sql = @"
-SELECT
-m.MemberID,
-m.TrainerID,
-m.ProductID,
+            const string sql1 = @"
+       SELECT DISTINCT
+           m.MemberID,
 
-t.TrainerID,
-t.TrainerName,
-t.Photo,
-t.Introduce,
+           c.MemberID,
+           c.MemberName,
+           c.Email,
 
-p.ProductID,
-p.ProductName,
-p.ProductDescription
+           o.MemberID,
+           o.TotalPrice
+       FROM MemberFavorite as m
+       LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
+       LEFT JOIN [Order] as o ON m.MemberID = o.MemberID
+       WHERE m.MemberID =  @MemberId;
+    ";
 
-FROM MemberFavorite as m
-LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID
-LEFT JOIN Product as p ON m.ProductID = p.ProductID
-WHERE m.MemberID = @MemberId";
+            const string sql2 = @"
+        SELECT
+            m.MemberID,
+            m.TrainerID,
+            m.ProductID,
+            t.TrainerID,
+            t.TrainerName,
+            t.Photo,
+            t.Introduce,
+            p.ProductID,
+            p.ProductName,
+            p.ProductDescription
+        FROM MemberFavorite as m
+        LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID
+        LEFT JOIN Product as p ON m.ProductID = p.ProductID
+        WHERE m.MemberID = @MemberId;
+    ";
 
             var parameters = new { MemberId = id };
-            //            這裡的檢查：
 
-            //確保只有當trainer不為NULL且其TrainerID也不為NULL時，才將它加入Trainers列表。
-            //確保只有當product不為NULL且其ProductId也不為NULL時，才將它加入Products列表。
-            var memberFavorites = await _context.QueryAsync<MemberFavorite, Trainer, Product, MemberFavorite>(
-    sql,
-    (memberFavorite, trainer, product) =>
-    {
-        if (trainer != null && trainer.TrainerId != null)
-        {
-            memberFavorite.Trainers.Add(trainer);
-        }
+            var memberFavorites1 = await _context.QueryAsync<MemberFavorite, Member, Order, MemberFavorite>(
+                 sql1,
+                 (memberFavorite, member, order) =>
+                 {
+                     if (member != null && member.MemberId != null)
+                     {
+                         memberFavorite.Members.Add(member);
+                     }
 
-        if (product != null && product.ProductId != null)
-        {
-            memberFavorite.Products.Add(product);
-        }
+                     if (order != null && order.MemberId != null)
+                     {
+                         memberFavorite.Orders.Add(order);
+                     }
 
-        return memberFavorite;
-    },
+                     return memberFavorite;
+                 },
+                 param: parameters,
+                 splitOn: "MemberId,MemberId"
+             );
+
+
+            var memberFavorites2 = await _context.QueryAsync<MemberFavorite, Trainer, Product, MemberFavorite>(
+                sql2,
+                (memberFavorite, trainer, product) =>
+                {
+                    if (trainer != null && trainer.TrainerId != null)
+                    {
+                        memberFavorite.Trainers.Add(trainer);
+                    }
+
+                    if (product != null && product.ProductId != null)
+                    {
+                        memberFavorite.Products.Add(product);
+                    }
+
+                    return memberFavorite;
+                },
                 param: parameters,
-                splitOn: "TrainerId,ProductId");
+                splitOn: "TrainerId,ProductId"
+            );
 
-            // Basic validation to ensure data exists
-            if (memberFavorites == null || !memberFavorites.Any())
+            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()))
             {
                 return NotFound("No data found");
             }
 
-            return Ok(memberFavorites);
+            // 此處可以根據您的需求來決定如何組合或返回查詢結果。
+            return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
         }
 
 
 
-
-
-
-
-        //        //查找所有與特定MemberID相關的MemberFavorite、Trainers和Product的資料。
-        //        [HttpGet("{id}")]
-        //        public async Task<IActionResult> GetMemberFavorites(int id)
-        //        {
-        //            const string sql = @"
-
-        //SELECT
-        //    m.MemberID,
-        //    m.TrainerID,
-        //    m.ProductID,
-
-        //    t.TrainerID,
-        //    t.TrainerName,
-        //    t.Photo,
-        //    t.Introduce,
-
-        //    p.ProductID,
-        //    p.ProductName,
-        //    p.ProductDescription,
-
-        //    c.MemberID,
-        //    c.MemberName,
-        //    c.Email,
-
-        //    o.MemberID,
-        //    o.TotalPrice
-
-        //FROM MemberFavorite as m
-        //LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID
-        ////LEFT JOIN Product as p ON m.ProductID = p.ProductID
-        ////LEFT JOIN Member as c ON m.MemberID = c.MemberID
-        ////LEFT JOIN [Order] as o ON m.MemberID = o.MemberID
-
-        //WHERE m.MemberID = @MemberId
-        //";
-
-        //            var parameters = new { MemberId = id };
-        ////            這裡的檢查：
-
-        ////確保只有當trainer不為NULL且其TrainerID也不為NULL時，才將它加入Trainers列表。
-        ////確保只有當product不為NULL且其ProductId也不為NULL時，才將它加入Products列表。
-        //            var memberFavorites = await _context.QueryAsync<MemberFavorite, Trainer, Product, Member, Order, MemberFavorite >(
-        //    sql,
-        //    (memberFavorite, trainer, product, Member, Order) =>
-        //    {
-        //        if (trainer != null && trainer.TrainerId != null)
-        //        {
-        //            memberFavorite.Trainers.Add(trainer);
-        //        }
-
-        //        if (product != null && product.ProductId != null)
-        //        {
-        //            memberFavorite.Products.Add(product);
-        //        }
-
-        //        //if (Member != null && Member.MemberId != null)
-        //        //{
-        //        //    memberFavorite.Members.Add(Member);
-        //        //}
-
-        //        //if (Order != null && Order.MemberId != null)
-        //        //{
-        //        //    memberFavorite.Orders.Add(Order);
-        //        //}
-
-        //        return memberFavorite;
-        //    },
-        //                param: parameters,
-        //                splitOn: "TrainerId,ProductId");
-
-        //            // Basic validation to ensure data exists
-        //            if (memberFavorites == null || !memberFavorites.Any())
-        //            {
-        //                return NotFound("No data found");
-        //            }
-
-        //            return Ok(memberFavorites);
-        //        }
-
-
-
-
-
-
-
         //// POST api/<MemberFavoriteController>
-        //[HttpPost]
+        //[HttpPost].
         //public void Post([FromBody] string value)
         //{
         //}
