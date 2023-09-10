@@ -74,6 +74,46 @@ namespace FitMatch_API.Controllers
 
             return Ok(result);
         }
-       
+        [HttpPost]
+        public async Task<IActionResult> MakeReservation([FromBody] ReservationData ReservationData)
+        {
+            if (ReservationData == null)
+            {
+                return BadRequest("找不到data.");
+            }
+
+            // 更新課程記錄
+            string sql = @"UPDATE Class SET MemberID = @MemberId WHERE ClassID = @ClassId";
+
+            var parameters = new
+            {
+                ClassId = ReservationData.ClassId,
+                MemberId = ReservationData.MemberId,
+            };
+
+            try
+            {
+                int rowsAffected = await _db.ExecuteAsync(sql, parameters);
+
+                if (rowsAffected > 0)
+                {
+                    return Ok("預約成功");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log exception here
+                return StatusCode(500, $"錯誤訊息: {ex}");
+            }
+
+            return BadRequest("無法預約");
+        }
+        // 接收的模型
+        public class ReservationData
+        {
+            public int ClassId { get; set; }
+            public int MemberId { get; set; }
+        }
+
     }
 }
