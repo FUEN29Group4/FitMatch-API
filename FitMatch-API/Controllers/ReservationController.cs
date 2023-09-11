@@ -79,7 +79,7 @@ namespace FitMatch_API.Controllers
         {
             if (ReservationData == null)
             {
-                return BadRequest("找不到data.");
+                return BadRequest("找不到data");
             }
 
             // 更新課程記錄
