@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Microsoft.AspNetCore.Identity;
-using Fluent.Infrastructure.FluentModel;
+//using Fluent.Infrastructure.FluentModel;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace FitMatch_API.Controllers
@@ -67,19 +67,19 @@ namespace FitMatch_API.Controllers
 
 
 
-    public class AccountController : ControllerBase
-    {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+    //public class AccountController : ControllerBase
+    //{
+    //    private readonly UserManager<ApplicationUser> _userManager;
+    //    private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
+    //    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    //    {
+    //        _userManager = userManager;
+    //        _signInManager = signInManager;
+    //    }
 
-        // ... 登錄和註冊的實現
-    }
+    //    // ... 登錄和註冊的實現
+    //}
 
 
 

@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Text;
 
 namespace FitMatch_API.Controllers
@@ -24,7 +21,7 @@ namespace FitMatch_API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
-            const string sql = @"SELECT * FROM Gyms";
+            const string sql = @"SELECT TOP 3 * FROM Gyms";
 
             using (var multi = await _db.QueryMultipleAsync(sql))
             {
