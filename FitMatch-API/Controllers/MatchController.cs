@@ -27,10 +27,10 @@ namespace FitMatch_API.Controllers
             var trainersWithPhoto = await _db.QueryAsync<Trainer>(query);
             return Ok(trainersWithPhoto);
         }
-        [HttpGet("GymTOP4")]
+        [HttpGet("Gym")]
         public async Task<IActionResult> GetGyms()
         {
-            const string sql = @"SELECT TOP 4 GymID, GymName, Photo FROM Gyms";
+            const string sql = @"SELECT * FROM Gyms";
 
             using (var multi = await _db.QueryMultipleAsync(sql))
             {
@@ -56,6 +56,21 @@ namespace FitMatch_API.Controllers
                     return NotFound("No data found");
                 }
                 return Ok(Reviews);
+            }
+        }
+        [HttpGet("ClassTypes")]
+        public async Task<IActionResult> GetClassTypes()
+        {
+            const string sql = @"SELECT * FROM ClassTypes WHERE Status > 0;";
+
+            using (var multi = await _db.QueryMultipleAsync(sql))
+            {
+                var ClassTypes = multi.Read<ClassType>().ToList();
+                if (ClassTypes == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(ClassTypes);
             }
         }
     }
