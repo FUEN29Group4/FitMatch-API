@@ -1,41 +1,64 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using System.Text;
+using System.IO;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Create an IConfiguration
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// Configure JWT using IConfiguration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // Use IConfiguration to get settings
+            ValidIssuer = configuration["JwtSettings:ValidIssuer"],
+            ValidAudience = configuration["JwtSettings:ValidAudience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]))
+        };
+    });
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-//這段讓我的前端地址連的到
 builder.Services.AddCors(options =>
 {
-    //builder => builder.WithOrigins("http://127.0.0.1:5500/")
     options.AddPolicy("AllowMyOrigin",
         builder => builder.AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
 var app = builder.Build();
-// 配置中間件
+
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors("AllowMyOrigin"); // 確保這一行在 UseRouting 和 UseEndpoints 之前
+
+app.UseCors("AllowMyOrigin");
+
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseAuthorization();
-//app.MapControllers();
 
+app.UseAuthentication(); // Make sure this line is before UseAuthorization and after UseRouting
+app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-
-
 
 app.Run();
