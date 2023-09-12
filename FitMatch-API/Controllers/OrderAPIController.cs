@@ -10,6 +10,11 @@ using FitMatch_API.Models;
 using Dapper;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 
+
+
+
+
+
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace FitMatch_API.Controllers
@@ -147,8 +152,152 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        
-       
+        //====================================test====================================
+        // 商品列表
+        [HttpGet("/api/Order/Index")]
+        public IActionResult Index()
+        {
+            // 调用后端API获取商品列表
+            // 这里可以使用HttpClient来调用API
+
+            List<OrderViewModel> products = new List<OrderViewModel>
+        {
+            new OrderViewModel { ProductId = 1, ProductName = "商品1", Price = 100 },
+            new OrderViewModel { ProductId = 2, ProductName = "商品2", Price = 200 },
+            // 添加更多商品
+        };
+
+            return Ok("也許成功?");
+        }
+
+
+        // 加入购物车
+        [HttpPost("/api/Order/AddToCart")]
+        public IActionResult AddToCart(int productId)
+        {
+            // 在前端使用JavaScript将商品添加到本地存储购物车
+            // 这里省略前端JavaScript代码
+            return RedirectToAction("Index");
+        }
+
+        // 查看购物车
+        [HttpGet("/api/Order/ViewCart")]
+        public IActionResult ViewCart()
+        {
+            // 从本地存储获取购物车数据
+            // 这里省略前端JavaScript代码
+            return View();
+        }
+
+
+        // 更新购物车
+        [HttpPut("/api/Order/UpdateCart")]
+        public IActionResult UpdateCart(int productId, int quantity)
+        {
+            // 在前端使用JavaScript更新购物车
+            // 这里省略前端JavaScript代码
+            return RedirectToAction("ViewCart");
+        }
+
+        // 结账
+        [HttpPost("/api/OrderCheckout")]
+        public IActionResult Checkout()
+        {
+            // 将购物车数据发送到后端API并创建订单
+            // 这里可以使用HttpClient来调用API
+            // 前端在提交订单后清空本地存储的购物车数据
+
+            return RedirectToAction("Index");
+        }
+
+
+
+        //====================================test====================================
+
+
+
+        //[HttpPost]
+        //public async Task<IActionResult> Checkout([FromBody] List<OrderViewModel> orderItems)
+        //{
+        //    try
+        //    {
+        //        // 创建一个新订单
+        //        var newOrder = new OrderViewModel
+        //        {
+        //            MemberId = orderItems[0].MemberId,
+        //            OrderId = orderItems.Count,
+        //            OrderDetailId = orderItems.Count,
+        //            ProductId = orderItems.Count,
+        //            OrderTime = DateTime.Now,
+        //            Quantity = orderItems.Count,
+        //            ProductName = string.Join(", ", orderItems.Select(item => item.ProductName)), // 將商品名稱串聯為字串
+        //            Price = orderItems.Count,
+        //            TotalPrice = orderItems.Sum(item => item.Price * item.Quantity) // 計算總價
+
+        //            // 其他订单属性的赋值
+        //        };
+
+        //        //// 将订单项添加到新订单中
+        //        //foreach (var orderItem in orderItems)
+        //        //{
+        //        //    var product = await _context.Products.FindAsync(orderItem.ProductId);
+
+        //        //    if (product != null)
+        //        //    {
+        //        //        // 创建订单详情
+        //        //        var orderDetail = new OrderDetail
+        //        //        {
+        //        //            ProductId = product.Id, // 假设你有一个 Id 属性来表示产品的唯一标识
+        //        //            Quantity = orderItem.Quantity,
+        //        //            OrderId = newOrder.OrderId,
+        //        //            OrderDetailId = newOrder.OrderDetailId
+
+
+        //        //            // 其他订单详情属性的赋值
+        //        //        };
+
+        //        //        // 将订单详情添加到新订单中
+        //        //        newOrder.OrderDetailId.Add(orderDetail);
+
+        //        //        _context.Carts.Add(cart);
+        //        //        _context.SaveChanges();
+        //        //    }
+        //        //}
+
+        //        //// 保存订单到数据库
+        //        //_context.Orders.Add(newOrder);
+        //        //await _context.SaveChangesAsync();
+
+        //        return Ok(new { message = "订单已成功创建" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = "创建订单时出错：" + ex.Message });
+        //    }
+        //}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         ////讀取購物車所有資料
         //[HttpGet("/api/OrderAPI/GetCart")]
         //public async Task<ActionResult<CartViewModel>> GetCart()
