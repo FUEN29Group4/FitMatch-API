@@ -1,11 +1,13 @@
 ﻿using Dapper;
 using FitMatch_API.Models;
 using Microsoft.AspNetCore.Mvc;
+using FitMatch_API.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
-using Microsoft.AspNetCore.Identity;
-//using Fluent.Infrastructure.FluentModel;
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Dapper;
+using System.Text;
+
 
 namespace FitMatch_API.Controllers
 {
@@ -13,8 +15,6 @@ namespace FitMatch_API.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        // 網址 :  api/Member
-
 
         private readonly IDbConnection _db;
 
@@ -40,7 +40,6 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        // GET api/<MemberController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMember(int id)
         {
@@ -59,60 +58,23 @@ namespace FitMatch_API.Controllers
             }
         }
 
-
-
-
-
-
-
-
-
-    //public class AccountController : ControllerBase
-    //{
-    //    private readonly UserManager<ApplicationUser> _userManager;
-    //    private readonly SignInManager<ApplicationUser> _signInManager;
-
-    //    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
-    //    {
-    //        _userManager = userManager;
-    //        _signInManager = signInManager;
-    //    }
-
-    //    // ... 登錄和註冊的實現
-    //}
-
-
-
-    // GET: api/<LoginController>
-    //[HttpGet]
-    //public IEnumerable<string> Get()
-    //{
-    //    return new string[] { "value1", "value2" };
-    //}
-
-    // GET api/<LoginController>/5
-    //[HttpGet("{id}")]
-    //public string Get(int id)
-    //{
-    //    return "value";
-    //}
-
-    // POST api/<LoginController>
-    [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(Member loginMember)
         {
+            const string sql = @"SELECT * FROM Member WHERE Email = @Email AND Password = @Password";
+            var parameters = new { Email = loginMember.Email, Password = loginMember.Password };
+
+            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+            {
+                var member = multi.Read<Member>().FirstOrDefault();
+                if (member == null)
+                {
+                    return NotFound("Email 或 Password 錯誤");
+                }
+                return Ok(member);
+            }
         }
 
-        // PUT api/<LoginController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
 
-        // DELETE api/<LoginController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

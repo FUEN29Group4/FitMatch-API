@@ -9,8 +9,6 @@ public partial class Member
 
     public string? MemberName { get; set; }
 
-
-
     public bool? Gender { get; set; }
 
     public DateTime? Birth { get; set; }
