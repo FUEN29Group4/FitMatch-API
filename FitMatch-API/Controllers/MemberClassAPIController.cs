@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FitMatch_API.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper;
-using FitMatch_API.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,40 +10,39 @@ namespace FitMatch_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MemberFavoriteController : ControllerBase
+    public class MemberClassAPIController : ControllerBase
     {
-
         //======宣告變數跟串資料庫=======
 
         private readonly IDbConnection _context;//宣吿類別級變數，串資料庫
-        private readonly ILogger<MemberFavoriteController> _logger; //宣吿類別級變數，串登入資訊
+        private readonly ILogger<MemberClassAPIController> _logger; //宣吿類別級變數，串登入資訊
 
         //定義_context
-        public MemberFavoriteController(IConfiguration configuration)
+        public MemberClassAPIController(IConfiguration configuration)
         {
             _context = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
 
-        // R: 讀取所有MemberFavorite列表資料 => ok
-        // GET: api/<MemberFavoriteController>
+        // R: 讀取所有MemberClassAPI列表資料 => ok
+        // GET: api/<MemberClassAPIController>
         [HttpGet]
         public async Task<IActionResult> GetALLMemberFavorite()
         {
-            const string sql = @"SELECT * FROM [MemberFavorite]";
+            const string sql = @"SELECT * FROM [CLASS]";
 
             using (var multi = await _context.QueryMultipleAsync(sql))
             {
-                var MemberFavorites = multi.Read<MemberFavorite>().ToList();
+                var MemberClassAPIs = multi.Read<MemberClassAPI>().ToList();
                 // 基本驗證，確保資料存在
-                if (MemberFavorites == null)
+                if (MemberClassAPIs == null)
                 {
                     return NotFound("No data found");
                 }
-                return Ok(MemberFavorites);
+                return Ok(MemberClassAPIs);
             }
         }
 
-
+        // GET api/<MemberClassAPIController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMemberFavorites(int id)
         {
@@ -136,21 +135,19 @@ namespace FitMatch_API.Controllers
             return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
         }
 
-
-
-        //// POST api/<MemberFavoriteController>
-        //[HttpPost].
+        //// POST api/<MemberClassAPIController>
+        //[HttpPost]
         //public void Post([FromBody] string value)
         //{
         //}
 
-        //// PUT api/<MemberFavoriteController>/5
+        //// PUT api/<MemberClassAPIController>/5
         //[HttpPut("{id}")]
         //public void Put(int id, [FromBody] string value)
         //{
         //}
 
-        //// DELETE api/<MemberFavoriteController>/5
+        //// DELETE api/<MemberClassAPIController>/5
         //[HttpDelete("{id}")]
         //public void Delete(int id)
         //{
