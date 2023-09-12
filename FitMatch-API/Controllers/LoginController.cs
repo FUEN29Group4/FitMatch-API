@@ -59,20 +59,33 @@ namespace FitMatch_API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(Member loginMember)
+        public async Task<IActionResult> Login(LoginModel loginModel)
         {
-            const string sql = @"SELECT * FROM Member WHERE Email = @Email AND Password = @Password";
-            var parameters = new { Email = loginMember.Email, Password = loginMember.Password };
+            // 查詢 Member 表
+            var memberSql = @"SELECT * FROM Member WHERE Email = @Email AND Password = @Password";
+            var memberParameters = new { Email = loginModel.Email, Password = loginModel.Password };
 
-            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+            var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
+
+            if (member != null)
             {
-                var member = multi.Read<Member>().FirstOrDefault();
-                if (member == null)
-                {
-                    return NotFound("Email 或 Password 錯誤");
-                }
-                return Ok(member);
+                // 進行後續處理，例如設置 session 或發送 token
+                return Ok(new { Type = "Member", Data = member });
             }
+
+            // 查詢 Trainer 表
+            var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email AND Password = @Password";
+            var trainerParameters = new { Email = loginModel.Email, Password = loginModel.Password };
+
+            var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
+
+            if (trainer != null)
+            {
+                // 進行後續處理，例如設置 session 或發送 token
+                return Ok(new { Type = "Trainer", Data = trainer });
+            }
+
+            return NotFound("Email 或 Password 錯誤");
         }
 
 
