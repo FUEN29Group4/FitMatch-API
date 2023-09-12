@@ -21,7 +21,7 @@ namespace FitMatch_API.Models
         public string? Password { get; set; }
         public int? Approved { get; set; }
         //public CApprovalStatus? Approved { get; set; }    //判斷審核通過與否
-
+        public string Salt { get; set; }
         public DateTime? CreatedAt { get; set; }
         public string? Introduce { get; set; }
         //public Class ClassDetails { get; set; }

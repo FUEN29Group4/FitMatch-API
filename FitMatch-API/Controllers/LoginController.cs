@@ -1,11 +1,15 @@
 ﻿using Dapper;
 using FitMatch_API.Models;
 using Microsoft.AspNetCore.Mvc;
+using FitMatch_API.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
-using Microsoft.AspNetCore.Identity;
-//using Fluent.Infrastructure.FluentModel;
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Dapper;
+using System.Text;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using System.Security.Cryptography;
+
 
 namespace FitMatch_API.Controllers
 {
@@ -13,8 +17,6 @@ namespace FitMatch_API.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        // 網址 :  api/Member
-
 
         private readonly IDbConnection _db;
 
@@ -40,7 +42,6 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        // GET api/<MemberController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMember(int id)
         {
@@ -60,59 +61,64 @@ namespace FitMatch_API.Controllers
         }
 
 
-
-
-
-
-
-
-
-    //public class AccountController : ControllerBase
-    //{
-    //    private readonly UserManager<ApplicationUser> _userManager;
-    //    private readonly SignInManager<ApplicationUser> _signInManager;
-
-    //    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
-    //    {
-    //        _userManager = userManager;
-    //        _signInManager = signInManager;
-    //    }
-
-    //    // ... 登錄和註冊的實現
-    //}
-
-
-
-    // GET: api/<LoginController>
-    //[HttpGet]
-    //public IEnumerable<string> Get()
-    //{
-    //    return new string[] { "value1", "value2" };
-    //}
-
-    // GET api/<LoginController>/5
-    //[HttpGet("{id}")]
-    //public string Get(int id)
-    //{
-    //    return "value";
-    //}
-
-    // POST api/<LoginController>
-    [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginModel loginModel)
         {
+
+            // 查詢 Member 表
+            var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
+            var memberParameters = new { Email = loginModel.Email };
+
+            var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
+
+            if (member != null)
+            {
+                // 使用存儲的 Salt 和提交的 Password 生成新的哈希
+                var hashedPassword = HashPassword(loginModel.Password, member.Salt);  // 假設你有這樣的函數
+
+                // 比較新生成的哈希和存儲的哈希
+                if (hashedPassword == member.Password)
+                {
+                    // 進行後續處理，例如設置 session 或發送 token
+                    return Ok(new { Type = "Member", Data = member });
+                }
+            }
+
+            // 查詢 Trainer 表
+            var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email";
+            var trainerParameters = new { Email = loginModel.Email };
+
+            var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
+
+            if (trainer != null)
+            {
+                // 使用存儲的 Salt 和提交的 Password 生成新的哈希
+                var hashedPassword = HashPassword(loginModel.Password, trainer.Salt);  // 假設你有這樣的函數
+
+                // 比較新生成的哈希和存儲的哈希
+                if (hashedPassword == trainer.Password)
+                {
+                    // 進行後續處理，例如設置 session 或發送 token
+                    return Ok(new { Type = "Trainer", Data = trainer });
+                }
+            }
+
+            return NotFound("Email 或 Password 錯誤");
+
+
         }
 
-        // PUT api/<LoginController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        private string HashPassword(string password, string saltString)
         {
+            byte[] salt = Convert.FromBase64String(saltString);
+
+            return Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: password,
+                salt: salt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 10000,
+                numBytesRequested: 256 / 8));
         }
 
-        // DELETE api/<LoginController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }
