@@ -9,6 +9,9 @@
         public string Address { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
+
+        public string? Salt { get; set; }
         public string AccountType { get; set; }  // 教練 或 會員
+
     }
 }

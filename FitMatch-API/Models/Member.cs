@@ -28,6 +28,6 @@ public partial class Member
 
     public bool? Status { get; set; }
 
-
+    public string Salt { get; set; }
 
 }

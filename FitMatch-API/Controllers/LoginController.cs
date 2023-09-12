@@ -7,6 +7,8 @@ using System.Data.SqlClient;
 using System.Data;
 using Dapper;
 using System.Text;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using System.Security.Cryptography;
 
 
 namespace FitMatch_API.Controllers
@@ -58,36 +60,65 @@ namespace FitMatch_API.Controllers
             }
         }
 
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel loginModel)
         {
+
             // 查詢 Member 表
-            var memberSql = @"SELECT * FROM Member WHERE Email = @Email AND Password = @Password";
-            var memberParameters = new { Email = loginModel.Email, Password = loginModel.Password };
+            var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
+            var memberParameters = new { Email = loginModel.Email };
 
             var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
 
             if (member != null)
             {
-                // 進行後續處理，例如設置 session 或發送 token
-                return Ok(new { Type = "Member", Data = member });
+                // 使用存儲的 Salt 和提交的 Password 生成新的哈希
+                var hashedPassword = HashPassword(loginModel.Password, member.Salt);  // 假設你有這樣的函數
+
+                // 比較新生成的哈希和存儲的哈希
+                if (hashedPassword == member.Password)
+                {
+                    // 進行後續處理，例如設置 session 或發送 token
+                    return Ok(new { Type = "Member", Data = member });
+                }
             }
 
             // 查詢 Trainer 表
-            var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email AND Password = @Password";
-            var trainerParameters = new { Email = loginModel.Email, Password = loginModel.Password };
+            var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email";
+            var trainerParameters = new { Email = loginModel.Email };
 
             var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
 
             if (trainer != null)
             {
-                // 進行後續處理，例如設置 session 或發送 token
-                return Ok(new { Type = "Trainer", Data = trainer });
+                // 使用存儲的 Salt 和提交的 Password 生成新的哈希
+                var hashedPassword = HashPassword(loginModel.Password, trainer.Salt);  // 假設你有這樣的函數
+
+                // 比較新生成的哈希和存儲的哈希
+                if (hashedPassword == trainer.Password)
+                {
+                    // 進行後續處理，例如設置 session 或發送 token
+                    return Ok(new { Type = "Trainer", Data = trainer });
+                }
             }
 
             return NotFound("Email 或 Password 錯誤");
+
+
         }
 
+        private string HashPassword(string password, string saltString)
+        {
+            byte[] salt = Convert.FromBase64String(saltString);
+
+            return Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: password,
+                salt: salt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 10000,
+                numBytesRequested: 256 / 8));
+        }
 
     }
 }
