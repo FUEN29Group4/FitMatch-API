@@ -7,6 +7,8 @@
         public DateTime? StartTime { get; set; }
         public DateTime? BuildTime { get; set; }
         public DateTime? EndTime { get; set; }
+        public DateTime? OpentimeStart { get; set; }
+        public DateTime? OpentimeEnd { get; set; }
         public string CourseStatus {get; set;}
 
         public int GymId {get; set;}

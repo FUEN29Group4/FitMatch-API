@@ -69,5 +69,21 @@ namespace FitMatch_API.Controllers
                 return Ok(trainers);
             }
         }
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetTrainerAsync(int id)
+        //{
+        //    const string sql = @"SELECT * FROM Trainers Where Trainer = @TrainerId";
+
+        //    using (var multi = await _db.QueryMultipleAsync(sql))
+        //    {
+        //        var trainers = multi.Read<Trainer>().ToList();
+        //        // 基本驗證，確保資料存在
+        //        if (trainers == null)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+        //        return Ok(trainers);
+        //    }
+        //}
     }
 }
