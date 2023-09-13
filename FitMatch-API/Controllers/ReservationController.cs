@@ -17,31 +17,10 @@ namespace FitMatch_API.Controllers
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAll()
-        //{ //要查class裡面的 trainers跟gyms資料 sql還沒寫好 只是先試查而已
-        //    const string sql = @"SELECT * FROM Trainers;
-        //                         SELECT * FROM Gyms;
-        //                         SELECT * FROM Class;";
-
-        //    using (var multi = await _db.QueryMultipleAsync(sql))
-        //    {
-        //        var trainers = multi.Read<Trainer>().ToList();
-        //        var gyms = multi.Read<Gym>().ToList();
-        //        var classes = multi.Read<Class>().ToList();
-        //        // 基本驗證，確保資料存在
-        //        if (trainers == null || gyms == null || classes == null)
-        //        {
-        //            return NotFound("No data found");
-        //        }
-        //        return Ok(new { Trainers = trainers, Gyms = gyms, Classes = classes });
-        //    }
-        //}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
-        {
+        {//做教練預約週曆用的
             // 參數化查詢，防止SQL注入
-            //var trainer = await _db.QueryFirstOrDefaultAsync<Trainer>("select TrainerName,photo,Certificate,Experience,Expertise,CourseFee,Approved from Trainers where TrainerID = @Id AND Approved = 1", new { Id = id });
             string sql = @"SELECT t.TrainerID ,t.TrainerName, t.Photo, t.Certificate, t.Experience, t.Expertise, t.CourseFee, c.ClassID, c.ClassTypeID, c.GymID, c.MemberID, c.StartTime, c.EndTime, c.CourseStatus, g.GymID, g.GymName, g.Phone, g.Address,g.Photo FROM Trainers as t INNER JOIN Class as c ON t.TrainerID = c.TrainerID INNER JOIN Gyms as g ON c.GymID = g.GymID WHERE t.TrainerID = @Id AND t.Approved = 1";
 
             var lookup = new Dictionary<int, Trainer>();
@@ -76,7 +55,7 @@ namespace FitMatch_API.Controllers
         }
         [HttpPost]
         public async Task<IActionResult> MakeReservation([FromBody] ReservationData ReservationData)
-        {
+        {//接收預約資訊 更新sql
             if (ReservationData == null)
             {
                 return BadRequest("找不到data");

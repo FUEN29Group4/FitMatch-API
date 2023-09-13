@@ -29,7 +29,7 @@ namespace FitMatch_API.Controllers
         }
         [HttpGet("Gym")]
         public async Task<IActionResult> GetGyms()
-        {
+        {//查場館前五筆
             const string sql = @"SELECT * FROM Gyms";
 
             using (var multi = await _db.QueryMultipleAsync(sql))
@@ -45,7 +45,7 @@ namespace FitMatch_API.Controllers
         }
         [HttpGet("Reviews")]
         public async Task<IActionResult> GetReviews()
-        {
+        {//查評價
             const string sql = @"select r.MemberID,r.Comment,m.MemberName from Reviews as r inner join Member as m on r.MemberID=m.MemberID";
 
             using (var multi = await _db.QueryMultipleAsync(sql))
