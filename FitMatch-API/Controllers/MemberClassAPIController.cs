@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper;
+using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,6 +15,7 @@ namespace FitMatch_API.Controllers
     [ApiController]
     public class MemberClassAPIController : ControllerBase
     {
+        //    MemberClass/MemberClass?id=3
         //======宣告變數跟串資料庫=======
 
         private readonly IDbConnection _context;//宣吿類別級變數，串資料庫
@@ -24,9 +28,9 @@ namespace FitMatch_API.Controllers
         }
 
         // R: 讀取所有MemberClassAPI列表資料 => ok
-        // GET: api/<MemberClassAPIController>
+        //    MemberClass/MemberClass?id=3
         [HttpGet]
-        public async Task<IActionResult> GetALLMemberFavorite()
+        public async Task<IActionResult> GetALLMemberClassAPI()
         {
             const string sql = @"SELECT * FROM [CLASS]";
 
@@ -42,9 +46,9 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        // GET api/<MemberClassAPIController>/5
+        //    MemberClass/MemberClass?id=3
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetMemberFavorites(int id)
+        public async Task<IActionResult> GetMemberClassAPI(int id)
         {
             const string sql1 = @"
        SELECT DISTINCT
@@ -63,94 +67,89 @@ namespace FitMatch_API.Controllers
     ";
 
             const string sql2 = @"
-        SELECT
-            m.MemberID,
-            m.TrainerID,
-            m.ProductID,
+           SELECT
+        c.MemberID,
+        c.TrainerID,
+        c.ClassTypeID,
+		c.GymID,
+		c.CourseStatus,
+		c.StartTime,
 
-            t.TrainerID,
-            t.TrainerName,
-            t.Photo,
-            t.Introduce,
+        t.TrainerID,
+        t.TrainerName,
 
-            p.ProductID,
-            p.ProductName,
-            p.ProductDescription
+       a.ClassTypeID,
+	   a.ClassName,
 
-        FROM MemberFavorite as m
-        LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID
-        LEFT JOIN Product as p ON m.ProductID = p.ProductID
-        WHERE m.MemberID = @MemberId;
+	   g.GymId,
+	   g.GymName,
+	   g.Photo,
+	   g.[Address]
+
+    FROM Class as c
+    LEFT JOIN Trainers as t ON c.TrainerID = t.TrainerID
+    LEFT JOIN ClassTypes as a ON   c.ClassTypeID = a.ClassTypeID
+	LEFT JOIN Gyms as g ON   c.GymID = g.GymID
+    WHERE c.MemberID = @MemberId;
     ";
 
             var parameters = new { MemberId = id };
 
-            var memberFavorites1 = await _context.QueryAsync<MemberFavorite, Member, Order, MemberFavorite>(
-                 sql1,
-                 (memberFavorite, member, order) =>
-                 {
-                     if (member != null && member.MemberId != null)
-                     {
-                         memberFavorite.Members.Add(member);
-                     }
+            var MemberClassAPIs1 = await _context.QueryAsync<MemberClassAPI, Member, Order, MemberClassAPI>(
+                    sql1,
+                    (memberClassapi, member, order) =>
+                    {
+                        if (member != null && member.MemberId != null)
+                        {
+                            memberClassapi.Members.Add(member);
+                        }
 
-                     if (order != null && order.MemberId != null)
-                     {
-                         memberFavorite.Orders.Add(order);
-                     }
+                        if (order != null && order.MemberId != null)
+                        {
+                            memberClassapi.Orders.Add(order);
+                        }
 
-                     return memberFavorite;
-                 },
-                 param: parameters,
-                 splitOn: "MemberId,MemberId"
-             );
+                        return memberClassapi;
+                    },
+                    param: parameters,
+                    splitOn: "MemberId,MemberId"
+                );
 
 
-            var memberFavorites2 = await _context.QueryAsync<MemberFavorite, Trainer, Product, MemberFavorite>(
+
+            var MemberClassAPIs2 = await _context.QueryAsync<Class, Trainer, ClassType, Gym, Class>(
                 sql2,
-                (memberFavorite, trainer, product) =>
+                (memberClassapi, trainer, classtype,gym) =>
                 {
                     if (trainer != null && trainer.TrainerId != null)
                     {
-                        memberFavorite.Trainers.Add(trainer);
+                        memberClassapi.Trainers.Add(trainer);
                     }
 
-                    if (product != null && product.ProductId != null)
+                    if (classtype != null && classtype.ClassTypeId != null)
                     {
-                        memberFavorite.Products.Add(product);
+                        memberClassapi.ClassTypes.Add(classtype);
                     }
 
-                    return memberFavorite;
+                    if (gym != null && gym.GymId != null)
+                    {
+                        memberClassapi.Gyms.Add(gym);
+                    }
+
+
+                    return memberClassapi;
                 },
                 param: parameters,
-                splitOn: "TrainerId,ProductId"
+                splitOn: "TrainerId,ClassTypeId,GymId"
             );
 
-            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()))
+            if ((MemberClassAPIs1 == null || !MemberClassAPIs1.Any()) && (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()))
             {
                 return NotFound("No data found");
             }
 
             // 此處可以根據您的需求來決定如何組合或返回查詢結果。
-            return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
+            return Ok(new { ClassAPIWithMembers = MemberClassAPIs1, ClassAPIWithTrainersAndClassTyoeAndGyms = MemberClassAPIs2 });
         }
-
-        //// POST api/<MemberClassAPIController>
-        //[HttpPost]
-        //public void Post([FromBody] string value)
-        //{
-        //}
-
-        //// PUT api/<MemberClassAPIController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
-
-        //// DELETE api/<MemberClassAPIController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
     }
 }

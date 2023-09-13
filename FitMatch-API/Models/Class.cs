@@ -28,14 +28,68 @@ public partial class Class
     //public List<ClassType> ClassTypes { get; set; }
     //public List<Trainer> Trainers { get; set; }
 
+    public List<Trainer> Trainers { get; set; } = new List<Trainer>();
 
-    //public Class()
-    //{
-    //    Trainers=new List<Trainer>();
-    //    Members = new List<Member>();
-    //    Gyms = new List<Gym>();
-    //    ClassTypes = new List<ClassType>();
-    //}
+    public List<Product> Products { get; set; } = new List<Product>();
+
+    public List<Member> Members { get; set; }
+     = new List<Member>();
+
+    public List<Order> Orders { get; set; }
+     = new List<Order>();
+
+
+    public string? MemberName { get; set; }
+    public string? Email { get; set; }
+
+    public int MemberClassAPIId { get; set; }
+
+
+
+
+    public string? ClassName { get; set; }
+
+    public string? Photo { get; set; }
+
+    public string? Introduction { get; set; }
+
+    public int? Status { get; set; }
+
+
+
+
+    public string? GymName { get; set; }
+
+    public string? Phone { get; set; }
+
+    public string? Address { get; set; }
+
+    public DateTime? OpentimeStart { get; set; }
+
+    public DateTime? OpentimeEnd { get; set; }
+
+    public bool? Approved { get; set; }
+
+    public string? GymDescription { get; set; }
+
+
+
+
+    public List<Class> Classs { get; set; } = new List<Class>();
+
+
+
+    public List<ClassType> ClassTypes { get; set; } = new List<ClassType>();
+
+    public List<Gym> Gyms { get; set; } = new List<Gym>();
+    public int? TotalPrice { get; set; }//訂單總價
+    public Class()
+    {
+        Trainers = new List<Trainer>();
+        Members = new List<Member>();
+        Gyms = new List<Gym>();
+        ClassTypes = new List<ClassType>();
+    }
 
 
 }
