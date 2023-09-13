@@ -45,29 +45,7 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        [HttpGet("Search")]
-        public async Task<IActionResult> SearchTrainers(bool? gender)
-        {
-            var sql = @"SELECT * FROM Trainers WHERE 1=1 ";
-
-            var parameters = new DynamicParameters();
-
-            if (gender.HasValue)
-            {
-                sql += " AND Gender = @Gender ";
-                parameters.Add("@Gender", gender);
-            }
-
-            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
-            {
-                var members = multi.Read<Member>().ToList();
-                if (members == null || !members.Any())
-                {
-                    return NotFound("No data found");
-                }
-                return Ok(members);
-            }
-        }
+        
         // GET api/<MemberController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMember(int id)
@@ -93,11 +71,40 @@ namespace FitMatch_API.Controllers
         {
         }
 
-        // PUT api/<MemberController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+
+
+        // 模拟一个简单的用户数据库，用List表示用户信息
+        //private static List<User> users = new List<User>
+        //{
+        //    new User { Id = 1, Username = "user1", Email = "user1@example.com", Password = "password1" },
+        //    new User { Id = 2, Username = "user2", Email = "user2@example.com", Password = "password2" }
+        //};
+
+        //[HttpPut("{id}")]
+        //public IActionResult UpdateUser(int id, [FromBody] User updatedUser)
+        //{
+        //    // 检查用户是否存在
+        //    var existingUser = users.FirstOrDefault(u => u.Id == id);
+        //    if (existingUser == null)
+        //    {
+        //        return NotFound("用户不存在");
+        //    }
+
+        //    // 验证数据
+        //    if (string.IsNullOrWhiteSpace(updatedUser.Email) || string.IsNullOrWhiteSpace(updatedUser.Password))
+        //    {
+        //        return BadRequest("必须提供有效的电子邮件和密码");
+        //    }
+
+        //    // 更新用户信息
+        //    existingUser.Email = updatedUser.Email;
+        //    existingUser.Password = updatedUser.Password;
+
+        //    // 返回成功响应
+        //    return Ok("用户资料已成功更新");
+        //}
+
+
 
         // DELETE api/<MemberController>/5
         [HttpDelete("{id}")]
