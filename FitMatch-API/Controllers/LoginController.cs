@@ -1,14 +1,15 @@
 ﻿using Dapper;
 using FitMatch_API.Models;
 using Microsoft.AspNetCore.Mvc;
+using FitMatch_API.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
+using Dapper;
 using System.Text;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+
 
 namespace FitMatch_API.Controllers
 {
@@ -18,14 +19,10 @@ namespace FitMatch_API.Controllers
     {
 
         private readonly IDbConnection _db;
-        private readonly string _issuer;
-        private readonly string _secretKey;
 
         public LoginController(IConfiguration configuration)
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
-            _issuer = configuration["JwtSettings:ValidIssuer"];
-            _secretKey = configuration["JwtSettings:Secret"];
         }
 
         [HttpGet]
@@ -82,9 +79,8 @@ namespace FitMatch_API.Controllers
                 // 比較新生成的哈希和存儲的哈希
                 if (hashedPassword == member.Password)
                 {
-                    // 生成 JWT token
-                    var token = GenerateJwtToken(member.MemberId.ToString());
-                    return Ok(new { Type = "Member", Data = member, Token = token });
+                    // 進行後續處理，例如設置 session 或發送 token
+                    return Ok(new { Type = "Member", Data = member });
                 }
             }
 
@@ -123,31 +119,6 @@ namespace FitMatch_API.Controllers
                 iterationCount: 10000,
                 numBytesRequested: 256 / 8));
         }
-
-        private string GenerateJwtToken(string userId)
-        {
-            var claims = new[]
-            {
-        new Claim(JwtRegisteredClaimNames.Sub, userId),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-    };
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var tokenDescriptor = new JwtSecurityToken(
-                issuer: _issuer,
-                audience: _issuer,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30), // 設置 token 過期時間
-                signingCredentials: credentials
-            );
-
-            var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
-            return token;
-        }
-
-
 
     }
 }
