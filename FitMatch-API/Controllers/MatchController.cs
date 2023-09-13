@@ -73,5 +73,20 @@ namespace FitMatch_API.Controllers
                 return Ok(ClassTypes);
             }
         }
+        [HttpGet("Trainer")]
+        public async Task<IActionResult> GetALL()
+        {
+            // 查詢所有教練不含個資訊息
+            var query = @"SELECT TrainerID, TrainerName, Gender,Address,Certificate,Expertise,Experience,CourseFee,Introduce, Photo FROM Trainers WHERE Approved = 1;";
+            using (var multi = await _db.QueryMultipleAsync(query))
+            {
+                var Trainer = multi.Read<Trainer>().ToList();
+                if (Trainer == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(Trainer);
+            }
+        }
     }
 }
