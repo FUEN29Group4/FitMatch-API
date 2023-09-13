@@ -82,6 +82,29 @@ namespace FitMatch_API.Controllers
                 return Ok(trainers);
             }
         }
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateTrainerByIdAsync(int id, [FromBody] Trainer trainerData)
+        //{
+        //    const string sql = @"
+        //UPDATE Trainers 
+        //SET Column1 = @Value1, Column2 = @Value2, ... 
+        //WHERE TrainerId = @TrainerId";
+
+        //    int rowsAffected = await _db.ExecuteAsync(sql,
+        //        new
+        //        {
+        //            TrainerId = id,
+        //            Value1 = trainerData.Column1,
+        //            Value2 = trainerData.Column2,
+        //            ...
+        //});
+
+        //    if (rowsAffected == 0)
+        //    {
+        //        return NotFound("No data found to update");
+        //    }
+        //    return Ok(new { status = "success", message = "教練資訊已成功更新" });
+        //}
         //[HttpGet("{id}")]
         //public async Task<IActionResult> GetTrainerAsync(int id)
         //{
