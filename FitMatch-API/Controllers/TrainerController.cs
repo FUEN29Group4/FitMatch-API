@@ -17,6 +17,19 @@ namespace FitMatch_API.Controllers
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTrainerByIdAsync(int id)
+        {
+            const string sql = @"SELECT * FROM Trainers WHERE TrainerId = @TrainerId";
+
+            var trainer = await _db.QueryFirstOrDefaultAsync<Trainer>(sql, new { TrainerId = id });
+
+            if (trainer == null)
+            {
+                return NotFound("No data found");
+            }
+            return Ok(trainer);
+        }
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
