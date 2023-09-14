@@ -18,14 +18,20 @@ namespace FitMatch_API.Controllers
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
-        [HttpGet("TrainerTOP5")]
-        public async Task<IActionResult> GetTOP5()
+        [HttpGet("Trainer")]
+        public async Task<IActionResult> GetTOP()
         {
-            // 查詢TOP5 TrainerID和Photo
-            var query = @"SELECT t.TrainerID,t.TrainerName, t.Photo FROM Trainers AS t INNER JOIN ( SELECT TOP 5 c.TrainerID FROM Class AS c GROUP BY c.TrainerID ORDER BY COUNT(c.TrainerID) DESC ) AS top_trainers ON t.TrainerID = top_trainers.TrainerID WHERE t.Approved = 1;";
 
-            var trainersWithPhoto = await _db.QueryAsync<Trainer>(query);
-            return Ok(trainersWithPhoto);
+            //var query = @"SELECT t.TrainerID,t.TrainerName, t.Photo FROM Trainers AS t INNER JOIN ( SELECT TOP 5 c.TrainerID FROM Class AS c GROUP BY c.TrainerID ORDER BY COUNT(c.TrainerID) DESC ) AS top_trainers ON t.TrainerID = top_trainers.TrainerID WHERE t.Approved = 1;";
+            
+            // 查詢最熱門的教練
+            var query = @"SELECT  COUNT(c.ClassID) AS ClassCount, t.TrainerID, t.TrainerName, t.Photo, t.Gender, t.Address, t.Certificate, t.Expertise, t.Experience, t.CourseFee, t.Introduce
+                FROM Trainers AS t
+                LEFT JOIN Class AS c ON t.TrainerID = c.TrainerID
+                WHERE t.Approved = 1
+                GROUP BY t.TrainerID, t.TrainerName, t.Photo, t.Gender, t.Address, t.Certificate, t.Expertise, t.Experience, t.CourseFee, t.Introduce;";
+            var trainerAll = await _db.QueryAsync<Trainer>(query);
+            return Ok(trainerAll);
         }
         [HttpGet("Gym")]
         public async Task<IActionResult> GetGyms()
@@ -73,20 +79,20 @@ namespace FitMatch_API.Controllers
                 return Ok(ClassTypes);
             }
         }
-        [HttpGet("Trainer")]
-        public async Task<IActionResult> GetALL()
-        {
-            // 查詢所有教練不含個資訊息
-            var query = @"SELECT TrainerID, TrainerName, Gender,Address,Certificate,Expertise,Experience,CourseFee,Introduce, Photo FROM Trainers WHERE Approved = 1;";
-            using (var multi = await _db.QueryMultipleAsync(query))
-            {
-                var Trainer = multi.Read<Trainer>().ToList();
-                if (Trainer == null)
-                {
-                    return NotFound("No data found");
-                }
-                return Ok(Trainer);
-            }
-        }
+        //[HttpGet("Trainer")]
+        //public async Task<IActionResult> GetALL()
+        //{
+        //    // 查詢所有教練不含個資訊息
+        //    var query = @"SELECT TrainerID, TrainerName, Gender,Address,Certificate,Expertise,Experience,CourseFee,Introduce, Photo FROM Trainers WHERE Approved = 1;";
+        //    using (var multi = await _db.QueryMultipleAsync(query))
+        //    {
+        //        var Trainer = multi.Read<Trainer>().ToList();
+        //        if (Trainer == null)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+        //        return Ok(Trainer);
+        //    }
+        //}
     }
 }

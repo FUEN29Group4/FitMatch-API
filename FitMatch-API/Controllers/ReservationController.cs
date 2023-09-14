@@ -21,7 +21,7 @@ namespace FitMatch_API.Controllers
         public async Task<IActionResult> GetById(int id)
         {//做教練預約週曆用的
             // 參數化查詢，防止SQL注入
-            string sql = @"SELECT t.TrainerID ,t.TrainerName, t.Photo, t.Certificate, t.Experience, t.Expertise, t.CourseFee, c.ClassID, c.ClassTypeID, c.GymID, c.MemberID, c.StartTime, c.EndTime, c.CourseStatus, g.GymID, g.GymName, g.Phone, g.Address,g.Photo FROM Trainers as t INNER JOIN Class as c ON t.TrainerID = c.TrainerID INNER JOIN Gyms as g ON c.GymID = g.GymID WHERE t.TrainerID = @Id AND t.Approved = 1";
+            string sql = @"SELECT t.TrainerID ,t.TrainerName, t.Photo, t.Certificate, t.Experience, t.Expertise, t.CourseFee, c.ClassID, c.GymID, c.MemberID, c.StartTime, c.EndTime, c.CourseStatus, g.GymID, g.GymName, g.Phone, g.Address,g.Photo FROM Trainers as t INNER JOIN Class as c ON t.TrainerID = c.TrainerID INNER JOIN Gyms as g ON c.GymID = g.GymID WHERE t.TrainerID = @Id AND t.Approved = 1";
 
             var lookup = new Dictionary<int, Trainer>();
             await _db.QueryAsync<Trainer, Class, Gym, Trainer>(

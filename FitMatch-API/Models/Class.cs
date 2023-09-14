@@ -7,7 +7,7 @@ public partial class Class
 {
     public int ClassId { get; set; }
 
-    public int? ClassTypeId { get; set; }
+    //public int? ClassTypeId { get; set; }
 
     public int? TrainerId { get; set; }
 

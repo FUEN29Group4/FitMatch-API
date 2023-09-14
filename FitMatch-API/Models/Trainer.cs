@@ -29,6 +29,7 @@ namespace FitMatch_API.Models
         public List<Class> Classes { get; set; } 
         public List<Gym> Gyms { get; set; }
         public List<ClassType> ClassTypes { get; set; }
+        public int ClassCount { get; set; }
 
         public Trainer()
         {
