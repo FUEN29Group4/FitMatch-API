@@ -24,7 +24,7 @@ namespace FitMatch_API.Controllers
 
             //var query = @"SELECT t.TrainerID,t.TrainerName, t.Photo FROM Trainers AS t INNER JOIN ( SELECT TOP 5 c.TrainerID FROM Class AS c GROUP BY c.TrainerID ORDER BY COUNT(c.TrainerID) DESC ) AS top_trainers ON t.TrainerID = top_trainers.TrainerID WHERE t.Approved = 1;";
             
-            // 查詢最熱門的教練
+            // 查詢最活躍的教練(依照開課數量)
             var query = @"SELECT  COUNT(c.ClassID) AS ClassCount, t.TrainerID, t.TrainerName, t.Photo, t.Gender, t.Address, t.Certificate, t.Expertise, t.Experience, t.CourseFee, t.Introduce
                 FROM Trainers AS t
                 LEFT JOIN Class AS c ON t.TrainerID = c.TrainerID
