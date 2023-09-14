@@ -10,7 +10,7 @@ public partial class Order
 
     public int? MemberId { get; set; }//會員編號
 
-    public int? TotalPrice { get; set; }//訂單總價
+    public decimal? TotalPrice { get; set; }//訂單總價
 
     public DateTime? OrderTime { get; set; }//訂單時間
 
