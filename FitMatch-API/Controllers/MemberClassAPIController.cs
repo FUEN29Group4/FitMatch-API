@@ -15,11 +15,11 @@ namespace FitMatch_API.Controllers
     [ApiController]
     public class MemberClassAPIController : ControllerBase
     {
-        //    MemberClass/MemberClass?id=3
+        //   Member/MemberClass
         //======宣告變數跟串資料庫=======
 
-        private readonly IDbConnection _context;//宣吿類別級變數，串資料庫
-        private readonly ILogger<MemberClassAPIController> _logger; //宣吿類別級變數，串登入資訊
+        private readonly IDbConnection _context;                                //宣吿類別級變數，串資料庫
+        private readonly ILogger<MemberClassAPIController> _logger;             //宣吿類別級變數，串登入資訊
 
         //定義_context
         public MemberClassAPIController(IConfiguration configuration)
@@ -28,7 +28,7 @@ namespace FitMatch_API.Controllers
         }
 
         // R: 讀取所有MemberClassAPI列表資料 => ok
-        //    MemberClass/MemberClass?id=3
+        //   Member/MemberClass
         [HttpGet]
         public async Task<IActionResult> GetALLMemberClassAPI()
         {
@@ -46,7 +46,7 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        //    MemberClass/MemberClass?id=3
+        //   Member/MemberClass
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMemberClassAPI(int id)
         {
@@ -70,25 +70,19 @@ namespace FitMatch_API.Controllers
            SELECT
         c.MemberID,
         c.TrainerID,
-        c.ClassTypeID,
 		c.GymID,
 		c.CourseStatus,
-		c.StartTime,
+		c.BuildTime,
 
         t.TrainerID,
         t.TrainerName,
 
-       a.ClassTypeID,
-	   a.ClassName,
-
 	   g.GymId,
 	   g.GymName,
-	   g.Photo,
 	   g.[Address]
 
     FROM Class as c
     LEFT JOIN Trainers as t ON c.TrainerID = t.TrainerID
-    LEFT JOIN ClassTypes as a ON   c.ClassTypeID = a.ClassTypeID
 	LEFT JOIN Gyms as g ON   c.GymID = g.GymID
     WHERE c.MemberID = @MemberId;
     ";
@@ -115,20 +109,13 @@ namespace FitMatch_API.Controllers
                     splitOn: "MemberId,MemberId"
                 );
 
-
-
-            var MemberClassAPIs2 = await _context.QueryAsync<Class, Trainer, ClassType, Gym, Class>(
+            var MemberClassAPIs2 = await _context.QueryAsync<Class, Trainer, Gym, Class>(
                 sql2,
-                (memberClassapi, trainer, classtype,gym) =>
+                (memberClassapi, trainer,gym) =>
                 {
                     if (trainer != null && trainer.TrainerId != null)
                     {
                         memberClassapi.Trainers.Add(trainer);
-                    }
-
-                    if (classtype != null && classtype.ClassTypeId != null)
-                    {
-                        memberClassapi.ClassTypes.Add(classtype);
                     }
 
                     if (gym != null && gym.GymId != null)
@@ -140,7 +127,7 @@ namespace FitMatch_API.Controllers
                     return memberClassapi;
                 },
                 param: parameters,
-                splitOn: "TrainerId,ClassTypeId,GymId"
+                splitOn: "TrainerId,GymId"
             );
 
             if ((MemberClassAPIs1 == null || !MemberClassAPIs1.Any()) && (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()))
