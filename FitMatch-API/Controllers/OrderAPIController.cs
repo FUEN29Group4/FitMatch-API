@@ -152,6 +152,82 @@ namespace FitMatch_API.Controllers
             }
         }
 
+
+
+
+        //======= 建立訂單 test  =======
+        [HttpPost]
+
+        public IActionResult CreateOrder([FromBody] OrderViewModel orderViewModel)
+        {
+            // 在这里处理接收到的订单信息
+            // orderViewModel 包含了订单相关的数据，例如MemberId、TotalPrice、PaymentMethod、ShippingMethod等
+
+                // 1. 创建新订单
+                var newOrder = new Order
+                {
+                    MemberId = orderViewModel.MemberId,
+                    TotalPrice = orderViewModel.TotalPrice,
+                    OrderTime = DateTime.Now, // 您可以根据需要设置订单时间
+                    PaymentMethod = orderViewModel.PaymentMethod,
+                    ShippingMethod = orderViewModel.ShippingMethod
+                };
+
+                // 使用Dapper执行插入操作，并获取订单编号
+                int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
+                                                          VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
+                                                          SELECT SCOPE_IDENTITY();", newOrder);
+
+                // 2. 将订单明细写入数据库
+                foreach (var item in orderViewModel.OrderDetailIds)
+                {
+                    var orderDetail = new OrderDetail
+                    {
+                        OrderId = orderId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity
+                    };
+
+                // 使用Dapper执行插入操作
+                _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
+                                    VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
+                }
+
+                // 返回成功或其他适当的响应
+                return Ok(new { OrderId = orderId }); // 返回订单编号或其他信息
+            
+        }
+
+        //======= 建立訂單 test  end =======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         //====================================test====================================
         // 商品列表
         [HttpGet("/api/Order/Index")]
@@ -221,55 +297,57 @@ namespace FitMatch_API.Controllers
         //{
         //    try
         //    {
-        //        // 创建一个新订单
-        //        var newOrder = new OrderViewModel
+        //        创建一个新订单
+        //       var newOrder = new OrderViewModel
+        //       {
+        //           MemberId = orderItems[0].MemberId,
+        //           OrderId = orderItems.Count,
+        //           OrderDetailId = orderItems.Count,
+        //           ProductId = orderItems.Count,
+        //           OrderTime = DateTime.Now,
+        //           Quantity = orderItems.Count,
+        //           ProductName = string.Join(", ", orderItems.Select(item => item.ProductName)), // 將商品名稱串聯為字串
+        //           Price = orderItems.Count,
+        //           TotalPrice = orderItems.Sum(item => item.Price * item.Quantity) // 計算總價
+
+
+        //            其他订单属性的赋值
+        //       };
+
+        //        // 将订单项添加到新订单中
+        //        foreach (var orderItem in orderItems)
         //        {
-        //            MemberId = orderItems[0].MemberId,
-        //            OrderId = orderItems.Count,
-        //            OrderDetailId = orderItems.Count,
-        //            ProductId = orderItems.Count,
-        //            OrderTime = DateTime.Now,
-        //            Quantity = orderItems.Count,
-        //            ProductName = string.Join(", ", orderItems.Select(item => item.ProductName)), // 將商品名稱串聯為字串
-        //            Price = orderItems.Count,
-        //            TotalPrice = orderItems.Sum(item => item.Price * item.Quantity) // 計算總價
+        //            var product = await _context.Products.FindAsync(orderItem.ProductId);
 
-        //            // 其他订单属性的赋值
-        //        };
-
-        //        //// 将订单项添加到新订单中
-        //        //foreach (var orderItem in orderItems)
-        //        //{
-        //        //    var product = await _context.Products.FindAsync(orderItem.ProductId);
-
-        //        //    if (product != null)
-        //        //    {
-        //        //        // 创建订单详情
-        //        //        var orderDetail = new OrderDetail
-        //        //        {
-        //        //            ProductId = product.Id, // 假设你有一个 Id 属性来表示产品的唯一标识
-        //        //            Quantity = orderItem.Quantity,
-        //        //            OrderId = newOrder.OrderId,
-        //        //            OrderDetailId = newOrder.OrderDetailId
+        //            if (product != null)
+        //            {
+        //                // 创建订单详情
+        //                var orderDetail = new OrderDetail
+        //                {
+        //                    ProductId = product.Id, // 假设你有一个 Id 属性来表示产品的唯一标识
+        //                    Quantity = orderItem.Quantity,
+        //                    OrderId = newOrder.OrderId,
+        //                    OrderDetailId = newOrder.OrderDetailId
 
 
-        //        //            // 其他订单详情属性的赋值
-        //        //        };
+        //                    // 其他订单详情属性的赋值
+        //                };
 
-        //        //        // 将订单详情添加到新订单中
-        //        //        newOrder.OrderDetailId.Add(orderDetail);
+        //                // 将订单详情添加到新订单中
+        //                newOrder.OrderDetailId.Add(orderDetail);
 
-        //        //        _context.Carts.Add(cart);
-        //        //        _context.SaveChanges();
-        //        //    }
-        //        //}
+        //                _context.Carts.Add(cart);
+        //                _context.SaveChanges();
+        //            }
+        //        }
 
-        //        //// 保存订单到数据库
-        //        //_context.Orders.Add(newOrder);
-        //        //await _context.SaveChangesAsync();
+        //        // 保存订单到数据库
+        //        _context.Orders.Add(newOrder);
+        //        await _context.SaveChangesAsync();
 
         //        return Ok(new { message = "订单已成功创建" });
         //    }
+
         //    catch (Exception ex)
         //    {
         //        return BadRequest(new { message = "创建订单时出错：" + ex.Message });
