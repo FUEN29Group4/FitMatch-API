@@ -37,6 +37,16 @@ public partial class MemberFavorite
 
     public int? TotalPrice { get; set; }//訂單總價
 
+
+    public class OrderSummary
+    {
+        public decimal TotalOrderAmount { get; set; }
+    }
+
+
+
+
+
     public List<Trainer> Trainers { get; set; } = new List<Trainer>();
 
     public List<Product> Products { get; set; } = new List<Product>();

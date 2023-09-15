@@ -6,6 +6,7 @@ using Dapper;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using static FitMatch_API.Models.MemberFavorite;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -51,19 +52,16 @@ namespace FitMatch_API.Controllers
         public async Task<IActionResult> GetMemberClassAPI(int id)
         {
             const string sql1 = @"
-       SELECT DISTINCT
-           m.MemberID,
+SELECT DISTINCT
+    m.MemberID AS mMemberId,
+    c.MemberID AS cMemberId,
+    c.MemberName,
+    c.Email
+FROM MemberFavorite as m
+LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
+WHERE m.MemberID = @MemberId;
 
-           c.MemberID,
-           c.MemberName,
-           c.Email,
 
-           o.MemberID,
-           o.TotalPrice
-       FROM MemberFavorite as m
-       LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
-       LEFT JOIN [Order] as o ON m.MemberID = o.MemberID
-       WHERE m.MemberID =  @MemberId;
     ";
 
             const string sql2 = @"
@@ -88,31 +86,44 @@ namespace FitMatch_API.Controllers
     WHERE c.MemberID = @MemberId;
     ";
 
+            const string sql3 = @"
+        SELECT 
+            MemberID,
+            SUM(TotalPrice) AS TotalOrderAmount
+        FROM 
+            [Order]
+        WHERE 
+            MemberID = @MemberId
+        GROUP BY 
+            MemberID;
+    ";
+
+
+
             var parameters = new { MemberId = id };
 
-            var MemberClassAPIs1 = await _context.QueryAsync<MemberClassAPI, Member, Order, MemberClassAPI>(
-                    sql1,
-                    (memberClassapi, member, order) =>
-                    {
-                        if (member != null && member.MemberId != null)
-                        {
-                            memberClassapi.Members.Add(member);
-                        }
+            var MemberClassAPIs1 = await _context.QueryAsync<MemberClassAPI, Member, MemberClassAPI>(
+                  sql1,
+                  (memberClassapi, member) =>
+                  {
+                      if (member != null && member.MemberId != null)
+                      {
+                          memberClassapi.Members.Add(member);
+                      }
+                      return memberClassapi;
+                  },
+                  param: parameters,
+                  splitOn: "mMemberId,cMemberId"
+              );
 
-                        if (order != null && order.MemberId != null)
-                        {
-                            memberClassapi.Orders.Add(order);
-                        }
 
-                        return memberClassapi;
-                    },
-                    param: parameters,
-                    splitOn: "MemberId,MemberId"
-                );
+            //var MemberTotalOrderAmount = await _context.QueryFirstOrDefaultAsync<decimal>(sql3, parameters);
+            var orderSummary = await _context.QueryFirstOrDefaultAsync<OrderSummary>(sql3, parameters);
+
 
             var MemberClassAPIs2 = await _context.QueryAsync<Class, Trainer, Gym, Class>(
                 sql2,
-                (memberClassapi, trainer,gym) =>
+                (memberClassapi, trainer, gym) =>
                 {
                     if (trainer != null && trainer.TrainerId != null)
                     {
@@ -131,13 +142,25 @@ namespace FitMatch_API.Controllers
                 splitOn: "TrainerId,GymId"
             );
 
-            if ((MemberClassAPIs1 == null || !MemberClassAPIs1.Any()) && (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()))
+
+           
+
+
+
+            if ((MemberClassAPIs1 == null || !MemberClassAPIs1.Any()) &&
+         (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()) &&
+         orderSummary == null) // 增加判斷條件
             {
                 return NotFound("No data found");
             }
 
-            // 此處可以根據您的需求來決定如何組合或返回查詢結果。
-            return Ok(new { ClassAPIWithMembers = MemberClassAPIs1, ClassAPIWithTrainersAndClassTyoeAndGyms = MemberClassAPIs2 });
+            // 在回傳的物件中加入TotalOrderAmount
+            return Ok(new
+            {
+                ClassAPIWithMembers = MemberClassAPIs1,
+                ClassAPIWithTrainersAndClassTyoeAndGyms = MemberClassAPIs2,
+                TotalOrderAmount = orderSummary?.TotalOrderAmount ?? 0 // 使用了null conditional運算符
+            });
         }
     }
 }
