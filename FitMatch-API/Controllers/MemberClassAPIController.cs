@@ -68,6 +68,7 @@ namespace FitMatch_API.Controllers
 
             const string sql2 = @"
            SELECT
+        c.ClassID,
         c.MemberID,
         c.TrainerID,
 		c.GymID,
