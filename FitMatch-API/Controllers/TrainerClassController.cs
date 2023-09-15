@@ -31,12 +31,11 @@ namespace FitMatch_API.Controllers
             const string sql = @"SELECT a.ClassID, a.CourseStatus, a.StartTime, a.BuildTime, a.EndTime, 
                     b.GymID, b.GymName,b.OpentimeStart,b.OpentimeEnd,
                     c.MemberID, c.MemberName, 
-                    d.ClassTypeID, d.ClassName,
+                     
                     e.TrainerName,e.TrainerID
                     FROM Class AS a
                     INNER JOIN Gyms AS b ON a.GymID = b.GymID
                     INNER JOIN Member AS c ON a.MemberID = c.MemberID
-                    INNER JOIN ClassTypes AS d ON a.ClassTypeID = d.ClassTypeID
                     INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
                     WHERE a.TrainerID = @TrainerId ;";
             var parameters = new { TrainerId = id };
@@ -64,60 +63,60 @@ namespace FitMatch_API.Controllers
         // POST api/<TrainerClassController>
 
 
-        [HttpGet("{id}/check")]
-        public async Task<IActionResult> Check(int id)
-        {
-            const string sql = @"SELECT a.ClassID, a.CourseStatus, a.StartTime, a.BuildTime, a.EndTime, 
-                    b.GymID, b.GymName,b.OpentimeStart,b.OpentimeEnd,
-                    c.MemberID, c.MemberName, 
-                    d.ClassTypeID, d.ClassName,
-                    e.TrainerName,e.TrainerID
-                    FROM Class AS a
-                    INNER JOIN Gyms AS b ON a.GymID = b.GymID
-                    INNER JOIN Member AS c ON a.MemberID = c.MemberID
-                    INNER JOIN ClassTypes AS d ON a.ClassTypeID = d.ClassTypeID
-                    INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
-                    WHERE a.TrainerID = @TrainerId ;"; // 保持原样
-            var parameters = new { TrainerId = id };
+        //[HttpGet("{id}/check")]
+        //public async Task<IActionResult> Check(int id)
+        //{
+        //    const string sql = @"SELECT a.ClassID, a.CourseStatus, a.StartTime, a.BuildTime, a.EndTime, 
+        //            b.GymID, b.GymName,b.OpentimeStart,b.OpentimeEnd,
+        //            c.MemberID, c.MemberName, 
+        //            d.ClassTypeID, d.ClassName,
+        //            e.TrainerName,e.TrainerID
+        //            FROM Class AS a
+        //            INNER JOIN Gyms AS b ON a.GymID = b.GymID
+        //            INNER JOIN Member AS c ON a.MemberID = c.MemberID
+        //            INNER JOIN ClassTypes AS d ON a.ClassTypeID = d.ClassTypeID
+        //            INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
+        //            WHERE a.TrainerID = @TrainerId ;"; // 保持原样
+        //    var parameters = new { TrainerId = id };
 
-            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
-            {
-                var TrainerClass = multi.Read<TrainerClassDTO>().ToList();
-                if (TrainerClass == null || TrainerClass.Count == 0)
-                {
-                    return NotFound("No data found");
-                }
-                return Ok(TrainerClass);
-            }
-        }
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] TrainerClassDTO newClass)
-        {
+        //    using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+        //    {
+        //        var TrainerClass = multi.Read<TrainerClassDTO>().ToList();
+        //        if (TrainerClass == null || TrainerClass.Count == 0)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+        //        return Ok(TrainerClass);
+        //    }
+        //}
+        //[HttpPost]
+        //public async Task<IActionResult> Create([FromBody] TrainerClassDTO newClass)
+        //{
 
-            const string sql = @"INSERT INTO Class (ClassTypeID, TrainerID, GymID, StartTime, EndTime, CourseStatus, BuildTime)
-                             VALUES (@ClassTypeID, @TrainerID, @GymID, @StartTime, @EndTime, @CourseStatus, GETDATE());";
+        //    const string sql = @"INSERT INTO Class (ClassTypeID, TrainerID, GymID, StartTime, EndTime, CourseStatus, BuildTime)
+        //                     VALUES (@ClassTypeID, @TrainerID, @GymID, @StartTime, @EndTime, @CourseStatus, GETDATE());";
 
-            try
-            {
-                var parameters = new
-                {
-                    ClassTypeID = newClass.ClassTypeId,
-                    TrainerID = newClass.TrainerID,
-                    GymID = newClass.GymId,
-                    StartTime = newClass.StartTime,
-                    EndTime = newClass.EndTime,
-                    CourseStatus = newClass.CourseStatus
-                };
+        //    try
+        //    {
+        //        var parameters = new
+        //        {
+        //            ClassTypeID = newClass.ClassTypeId,
+        //            TrainerID = newClass.TrainerID,
+        //            GymID = newClass.GymId,
+        //            StartTime = newClass.StartTime,
+        //            EndTime = newClass.EndTime,
+        //            CourseStatus = newClass.CourseStatus
+        //        };
 
-                await _db.ExecuteAsync(sql, parameters);
+        //        await _db.ExecuteAsync(sql, parameters);
 
-                return Ok(); // 插入成功
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message); // 如果出错，返回错误详情
-            }
-        }
+        //        return Ok(); // 插入成功
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message); // 如果出错，返回错误详情
+        //    }
+        //}
 
         //[HttpPut("{id}")]
         //public async Task<IActionResult> Update(int id, [FromBody] Class updatedClass)
