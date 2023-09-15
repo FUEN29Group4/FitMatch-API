@@ -140,5 +140,50 @@ namespace FitMatch_API.Controllers
                 numBytesRequested: 256 / 8));
         }
 
+        [HttpGet("getUserInfo")]
+        public async Task<IActionResult> GetUserInfo([FromHeader(Name = "Authorization")] string bearerToken)
+        {
+            if (string.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return BadRequest("Invalid token");
+            }
+
+            var token = bearerToken.Substring("Bearer ".Length).Trim();
+
+            // 驗證和解析 JWT 令牌（這裡只是一個簡單的示例，實際實施可能更複雜）
+            var handler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("FitMatch123456789123456789123456789");
+            var validations = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false
+            };
+
+            var claims = handler.ValidateToken(token, validations, out var tokenSecure);
+            var userId = int.Parse(claims.FindFirst("Id").Value);
+            var userType = claims.FindFirst("Type").Value;
+
+            // 根據 userType 和 userId 從數據庫中獲取用戶詳細信息
+            if (userType == "Member")
+            {
+                var sql = @"SELECT * FROM Member WHERE MemberId = @MemberId";
+                var parameters = new { MemberId = userId };
+                var member = await _db.QuerySingleOrDefaultAsync<Member>(sql, parameters);
+                return Ok(member);
+            }
+            else if (userType == "Trainer")
+            {
+                var sql = @"SELECT * FROM Trainers WHERE TrainerId = @TrainerId";
+                var parameters = new { TrainerId = userId };
+                var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(sql, parameters);
+                return Ok(trainer);
+            }
+
+            return BadRequest("Invalid user type");
+        }
+
+
     }
 }
