@@ -53,13 +53,11 @@ namespace FitMatch_API.Controllers
 
            c.MemberID,
            c.MemberName,
-           c.Email,
+           c.Email
 
-           o.MemberID,
-           o.TotalPrice
        FROM MemberFavorite as m
        LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
-       LEFT JOIN [Order] as o ON m.MemberID = o.MemberID
+
        WHERE m.MemberID =  @MemberId;
     ";
 
@@ -83,6 +81,19 @@ namespace FitMatch_API.Controllers
         LEFT JOIN Product as p ON m.ProductID = p.ProductID
         WHERE m.MemberID = @MemberId;
     ";
+            const string sql3 = @"
+    SELECT 
+        MemberID,
+        SUM(TotalPrice) AS TotalOrderAmount
+    FROM 
+        [Order]
+    WHERE 
+        MemberID = @MemberId
+    GROUP BY 
+        MemberID;
+    ";
+
+
 
             var parameters = new { MemberId = id };
 
@@ -127,13 +138,28 @@ namespace FitMatch_API.Controllers
                 splitOn: "TrainerId,ProductId"
             );
 
-            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()))
+            var totalOrderAmountResult = await _context.QueryFirstOrDefaultAsync<dynamic>(sql3, parameters);
+
+            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null)
             {
                 return NotFound("No data found");
             }
 
-            // 此處可以根據您的需求來決定如何組合或返回查詢結果。
-            return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
+            return Ok(new
+            {
+                FavoritesWithMembers = memberFavorites1,
+                FavoritesWithTrainersAndProducts = memberFavorites2,
+                TotalOrderAmount = totalOrderAmountResult?.TotalOrderAmount ?? 0 // 使用 null propagation 檢查是否為 null，如果為 null 則返回 0
+            });
+
+
+            //if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()))
+            //{
+            //    return NotFound("No data found");
+            //}
+
+            //// 此處可以根據您的需求來決定如何組合或返回查詢結果。
+            //return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
         }
 
 
