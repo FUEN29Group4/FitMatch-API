@@ -1,15 +1,14 @@
 ﻿using Dapper;
 using FitMatch_API.Models;
 using Microsoft.AspNetCore.Mvc;
-using FitMatch_API.Models;
-using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
-using Dapper;
 using System.Text;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
-
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace FitMatch_API.Controllers
 {
@@ -23,6 +22,25 @@ namespace FitMatch_API.Controllers
         public LoginController(IConfiguration configuration)
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        }
+
+
+        private string GenerateJwtToken(int userId, string userType)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("FitMatch123456789123456789123456789"); // 使用长、复杂和唯一的密钥
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+            new Claim("Id", userId.ToString()),
+            new Claim("Type", userType)
+        }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
 
         [HttpGet]
@@ -80,7 +98,8 @@ namespace FitMatch_API.Controllers
                 if (hashedPassword == member.Password)
                 {
                     // 進行後續處理，例如設置 session 或發送 token
-                    return Ok(new { Type = "Member", Data = member });
+                    var token = GenerateJwtToken(member.MemberId, "Member");
+                    return Ok(new { Token = token, Type = "Member", Data = member });
                 }
             }
 
@@ -99,7 +118,8 @@ namespace FitMatch_API.Controllers
                 if (hashedPassword == trainer.Password)
                 {
                     // 進行後續處理，例如設置 session 或發送 token
-                    return Ok(new { Type = "Trainer", Data = trainer });
+                    var token = GenerateJwtToken(trainer.TrainerId, "Trainer");
+                    return Ok(new { Token = token, Type = "Trainer", Data = trainer });
                 }
             }
 
