@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper;
+using System.Net;
+using System.Text;
 
 namespace FitMatch_API.Controllers
 {  
@@ -76,6 +78,7 @@ namespace FitMatch_API.Controllers
 
                 if (rowsAffected > 0)
                 {
+                    testmessage(ReservationData);
                     return Ok("預約成功");
                 }
             }
@@ -86,6 +89,41 @@ namespace FitMatch_API.Controllers
             }
 
             return BadRequest("無法預約");
+        }
+
+        private void testmessage(ReservationData reservationData)
+        {
+            string token = "cKkJQCCyc9MWchZaeE8wr82jvH7kdyJ8RTXp1FgS4kA";
+            string url = "https://notify-api.line.me/api/notify";
+
+            string message = $"\n預約編號:{reservationData.ClassId}\n會員編號:{reservationData.MemberId}";
+
+            try
+            {
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.DefaultConnectionLimit = 9999;
+                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12; // Use TLS 1.2, TLS 1.1, and TLS 1.0
+
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                var postData = string.Format("message={0}", message);
+                var data = Encoding.UTF8.GetBytes(postData);
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.ContentLength = data.Length;
+                request.Headers.Add("Authorization", "Bearer " + token);
+
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; // Use TLS 1.2
+                ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true; // Bypass certificate validation
+
+                using (var stream = request.GetRequestStream()) stream.Write(data, 0, data.Length);
+                var response = (HttpWebResponse)request.GetResponse();
+                var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
         // 接收的模型
         public class ReservationData
