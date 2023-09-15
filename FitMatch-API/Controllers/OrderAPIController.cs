@@ -421,26 +421,26 @@ namespace FitMatch_API.Controllers
 
 
 
-        // POST api/values
-        // C: 創立資料
-        [HttpPost]
-        public void Post([FromBody]string value)
-        {
-        }
+        //// POST api/values
+        //// C: 創立資料
+        //[HttpPost]
+        //public void Post([FromBody]string value)
+        //{
+        //}
 
-        // PUT api/values/5
-        // U: 更新編輯資料
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+        //// PUT api/values/5
+        //// U: 更新編輯資料
+        //[HttpPut("{id}")]
+        //public void Put(int id, [FromBody]string value)
+        //{
+        //}
 
-        // DELETE api/values/5
-        // D: 刪除資料
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        //// DELETE api/values/5
+        //// D: 刪除資料
+        //[HttpDelete("{id}")]
+        //public void Delete(int id)
+        //{
+        //}
     }
 }
 
