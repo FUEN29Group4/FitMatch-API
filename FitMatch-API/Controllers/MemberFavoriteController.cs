@@ -177,11 +177,49 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
         }
 
 
-
+        //刪除
         // DELETE api/<MemberFavoriteController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // DELETE api/<MemberFavoriteController>/memberId/product/productId
+        [HttpDelete("{memberId}/product/{productId}")]
+        public async Task<IActionResult> DeleteProductFavorite(int memberId, int productId)
         {
+            // Define SQL statement to delete data with specific MemberID and ProductID
+            const string sql = @"DELETE FROM MemberFavorite WHERE MemberID = @MemberID AND ProductID = @ProductID";
+
+            // Execute the SQL statement
+            var affectedRows = await _context.ExecuteAsync(sql, new { MemberID = memberId, ProductID = productId });
+
+            // Check if any row was deleted
+            if (affectedRows > 0)
+            {
+                return Ok($"Deleted {affectedRows} record(s).");
+            }
+            else
+            {
+                return NotFound($"No record found with MemberID: {memberId} and ProductID: {productId}");
+            }
         }
+
+        // DELETE api/<MemberFavoriteController>/memberId/trainer/trainerId
+        [HttpDelete("{memberId}/trainer/{trainerId}")]
+        public async Task<IActionResult> DeleteTrainerFavorite(int memberId, int trainerId)
+        {
+            // Define SQL statement to delete data with specific MemberID and TrainerID
+            const string sql = @"DELETE FROM MemberFavorite WHERE MemberID = @MemberID AND TrainerID = @TrainerID";
+
+            // Execute the SQL statement
+            var affectedRows = await _context.ExecuteAsync(sql, new { MemberID = memberId, TrainerID = trainerId });
+
+            // Check if any row was deleted
+            if (affectedRows > 0)
+            {
+                return Ok($"Deleted {affectedRows} record(s).");
+            }
+            else
+            {
+                return NotFound($"No record found with MemberID: {memberId} and TrainerID: {trainerId}");
+            }
+        }
+
     }
 }
