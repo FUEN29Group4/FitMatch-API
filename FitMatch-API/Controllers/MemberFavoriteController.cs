@@ -48,99 +48,120 @@ namespace FitMatch_API.Controllers
         public async Task<IActionResult> GetMemberFavorites(int id)
         {
             const string sql1 = @"
-       SELECT DISTINCT
-           m.MemberID,
-
-           c.MemberID,
-           c.MemberName,
-           c.Email
-
-       FROM MemberFavorite as m
-       LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
-
-       WHERE m.MemberID =  @MemberId;
+SELECT DISTINCT
+    m.MemberID AS mMemberId,
+    c.MemberID AS cMemberId,
+    c.MemberName,
+    c.Email
+FROM MemberFavorite as m
+LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
+WHERE m.MemberID = @MemberId;
     ";
 
             const string sql2 = @"
+SELECT
+    m.MemberID,
+    m.TrainerID,
+
+    t.TrainerID,
+    t.TrainerName,
+    t.Photo,
+    t.Introduce
+
+FROM MemberFavorite as m
+LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID 
+WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
+    ";
+
+            const string sql4 = @"
         SELECT
             m.MemberID,
-            m.TrainerID,
             m.ProductID,
 
-            t.TrainerID,
-            t.TrainerName,
-            t.Photo,
-            t.Introduce,
 
             p.ProductID,
             p.ProductName,
-            p.ProductDescription
+            p.ProductDescription,
+            p.Photo
 
         FROM MemberFavorite as m
-        LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID
+
         LEFT JOIN Product as p ON m.ProductID = p.ProductID
-        WHERE m.MemberID = @MemberId;
+        WHERE m.MemberID = @MemberId  AND m.ProductID IS NOT NULL;
     ";
+
+
             const string sql3 = @"
-    SELECT 
-        MemberID,
-        SUM(TotalPrice) AS TotalOrderAmount
-    FROM 
-        [Order]
-    WHERE 
-        MemberID = @MemberId
-    GROUP BY 
-        MemberID;
+        SELECT 
+            MemberID,
+            SUM(TotalPrice) AS TotalOrderAmount
+        FROM 
+            [Order]
+        WHERE 
+            MemberID = @MemberId
+        GROUP BY 
+            MemberID;
     ";
 
 
 
             var parameters = new { MemberId = id };
 
-            var memberFavorites1 = await _context.QueryAsync<MemberFavorite, Member, Order, MemberFavorite>(
+            //找會員資訊
+            var memberFavorites1 = await _context.QueryAsync<MemberFavorite, Member, MemberFavorite>(
                  sql1,
-                 (memberFavorite, member, order) =>
+                 (memberFavorite, member) =>
                  {
                      if (member != null && member.MemberId != null)
                      {
                          memberFavorite.Members.Add(member);
                      }
 
-                     if (order != null && order.MemberId != null)
-                     {
-                         memberFavorite.Orders.Add(order);
-                     }
 
                      return memberFavorite;
                  },
                  param: parameters,
-                 splitOn: "MemberId,MemberId"
+                 splitOn: "mMemberId,cMemberId"
              );
 
-
-            var memberFavorites2 = await _context.QueryAsync<MemberFavorite, Trainer, Product, MemberFavorite>(
+            //找教練資訊
+            var memberFavorites2 = await _context.QueryAsync<MemberFavorite, Trainer, MemberFavorite>(
                 sql2,
-                (memberFavorite, trainer, product) =>
+                (memberFavorite, trainer) =>
                 {
                     if (trainer != null && trainer.TrainerId != null)
                     {
                         memberFavorite.Trainers.Add(trainer);
                     }
 
-                    if (product != null && product.ProductId != null)
-                    {
-                        memberFavorite.Products.Add(product);
-                    }
 
                     return memberFavorite;
                 },
                 param: parameters,
-                splitOn: "TrainerId,ProductId"
+                splitOn: "TrainerId"
             );
+            //找商品資訊
+            var memberFavorites4 = await _context.QueryAsync<MemberFavorite, Product, MemberFavorite>(
+               sql4,
+               (memberFavorite, product) =>
+               {
+                 
 
+                   if (product != null && product.ProductId != null)
+                   {
+                       memberFavorite.Products.Add(product);
+                   }
+
+                   return memberFavorite;
+               },
+               param: parameters,
+               splitOn: "ProductId"
+           );
+
+            //找會員年度總金額
             var totalOrderAmountResult = await _context.QueryFirstOrDefaultAsync<dynamic>(sql3, parameters);
 
-            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null)
+            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null && (memberFavorites4 == null || !memberFavorites4.Any()))
             {
                 return NotFound("No data found");
             }
@@ -148,38 +169,19 @@ namespace FitMatch_API.Controllers
             return Ok(new
             {
                 FavoritesWithMembers = memberFavorites1,
-                FavoritesWithTrainersAndProducts = memberFavorites2,
+                FavoritesWithTrainersAndProducts1 = memberFavorites2,
+                FavoritesWithTrainersAndProducts2 = memberFavorites4,
                 TotalOrderAmount = totalOrderAmountResult?.TotalOrderAmount ?? 0 // 使用 null propagation 檢查是否為 null，如果為 null 則返回 0
             });
 
-
-            //if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()))
-            //{
-            //    return NotFound("No data found");
-            //}
-
-            //// 此處可以根據您的需求來決定如何組合或返回查詢結果。
-            //return Ok(new { FavoritesWithMembers = memberFavorites1, FavoritesWithTrainersAndProducts = memberFavorites2 });
         }
 
 
 
-        //// POST api/<MemberFavoriteController>
-        //[HttpPost].
-        //public void Post([FromBody] string value)
-        //{
-        //}
-
-        //// PUT api/<MemberFavoriteController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
-
-        //// DELETE api/<MemberFavoriteController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
+        // DELETE api/<MemberFavoriteController>/5
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+        }
     }
 }
