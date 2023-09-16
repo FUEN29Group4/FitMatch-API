@@ -7,13 +7,13 @@ public partial class CustomerService
 {
     public int CustomerServiceId { get; set; }
 
-    public int? MemberId { get; set; }
+    public int? SenderId { get; set; }
 
     public string? MessageContent { get; set; }
 
     public DateTime? DateTime { get; set; }
 
-    public int? TrainerId { get; set; }
+    public int? ReceiverId { get; set; }
 
-    public int? MessageId { get; set; }
+    public string? Role { get; set; }//Trainer or Member
 }
