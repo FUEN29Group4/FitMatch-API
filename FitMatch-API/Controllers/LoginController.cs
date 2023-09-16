@@ -43,40 +43,40 @@ namespace FitMatch_API.Controllers
             return tokenHandler.WriteToken(token);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
-        {
-            const string sql = @"SELECT * FROM Member";
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllAsync()
+        //{//這裡怪怪 不能讓別人查到沒有token就能有的資料
+        //    const string sql = @"SELECT * FROM Member";
 
-            using (var multi = await _db.QueryMultipleAsync(sql))
-            {
-                var Member = multi.Read<Member>().ToList();
-                // 基本驗證，確保資料存在
-                if (Member == null)
-                {
-                    return NotFound("No data found");
-                }
-                return Ok(Member);
-            }
-        }
+        //    using (var multi = await _db.QueryMultipleAsync(sql))
+        //    {
+        //        var Member = multi.Read<Member>().ToList();
+        //        // 基本驗證，確保資料存在
+        //        if (Member == null)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+        //        return Ok(Member);
+        //    }
+        //}
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetMember(int id)
-        {
-            const string sql = @"SELECT MemberId,Email,Password FROM Member WHERE MemberId = @MemberId";
-            var parameters = new { MemberId = id };
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetMember(int id)
+        //{//這裡怪怪 不能讓別人查到沒有token就能有的帳密
+        //    const string sql = @"SELECT MemberId,Email,Password FROM Member WHERE MemberId = @MemberId";
+        //    var parameters = new { MemberId = id };
 
-            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
-            {
-                var member = multi.Read<Member>().FirstOrDefault();
-                // 基本驗證，確保資料存在
-                if (member == null)
-                {
-                    return NotFound("No data found");
-                }
-                return Ok(member);
-            }
-        }
+        //    using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+        //    {
+        //        var member = multi.Read<Member>().FirstOrDefault();
+        //        // 基本驗證，確保資料存在
+        //        if (member == null)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+        //        return Ok(member);
+        //    }
+        //}
 
 
         [HttpPost("login")]
