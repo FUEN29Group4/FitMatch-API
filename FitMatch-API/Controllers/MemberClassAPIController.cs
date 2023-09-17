@@ -51,76 +51,71 @@ namespace FitMatch_API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMemberClassAPI(int id)
         {
+            //尋找會員資料
             const string sql1 = @"
-SELECT DISTINCT
-    m.MemberID AS mMemberId,
-    c.MemberID AS cMemberId,
-    c.MemberName,
-    c.Email
-FROM MemberFavorite as m
-LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
-WHERE m.MemberID = @MemberId;
-
-
+        SELECT DISTINCT
+            m.MemberID AS mMemberId,
+            c.MemberID AS cMemberId,
+            c.MemberName,
+            c.Email
+        FROM MemberFavorite AS m
+        LEFT JOIN [Member] AS c ON m.MemberID = c.MemberID
+        WHERE m.MemberID = @MemberId;
     ";
-
-            const string sql2 = @"
-           SELECT
-        c.ClassID,
-        c.MemberID,
-        c.TrainerID,
-		c.GymID,
-		c.CourseStatus,
-		c.BuildTime,
-
-        t.TrainerID,
-        t.TrainerName,
-
-	   g.GymId,
-	   g.GymName,
-	   g.[Address]
-
-    FROM Class as c
-    LEFT JOIN Trainers as t ON c.TrainerID = t.TrainerID
-	LEFT JOIN Gyms as g ON   c.GymID = g.GymID
-    WHERE c.MemberID = @MemberId;
-    ";
-
+            //尋找會員年度花費
             const string sql3 = @"
         SELECT 
             MemberID,
             SUM(TotalPrice) AS TotalOrderAmount
-        FROM 
-            [Order]
-        WHERE 
-            MemberID = @MemberId
-        GROUP BY 
-            MemberID;
+        FROM [Order]
+        WHERE MemberID = @MemberId
+        GROUP BY MemberID;
+    ";
+
+            //尋找會員課程紀錄
+            const string sql2 = @"
+        SELECT
+            c.ClassID,
+            c.MemberID,
+            c.TrainerID,
+            c.GymID,
+            c.CourseStatus,
+            c.BuildTime,
+            t.TrainerID,
+            t.TrainerName,
+            g.GymId,
+            g.GymName,
+            g.[Address]
+        FROM Class AS c
+        LEFT JOIN Trainers AS t ON c.TrainerID = t.TrainerID
+        LEFT JOIN Gyms AS g ON c.GymID = g.GymID
+        WHERE c.MemberID = @MemberId;
     ";
 
 
 
             var parameters = new { MemberId = id };
 
+            //找會員資訊
             var MemberClassAPIs1 = await _context.QueryAsync<MemberClassAPI, Member, MemberClassAPI>(
-                  sql1,
-                  (memberClassapi, member) =>
-                  {
-                      if (member != null && member.MemberId != null)
-                      {
-                          memberClassapi.Members.Add(member);
-                      }
-                      return memberClassapi;
-                  },
-                  param: parameters,
-                  splitOn: "mMemberId,cMemberId"
-              );
+                sql1,
+                (memberClassapi, member) =>
+                {
+                    if (member != null && member.MemberId != null)
+                    {
+                        memberClassapi.Members.Add(member);
+                    }
+                    return memberClassapi;
+                },
+                param: parameters,
+                splitOn: "mMemberId,cMemberId"
+            );
 
-
-            //var MemberTotalOrderAmount = await _context.QueryFirstOrDefaultAsync<decimal>(sql3, parameters);
+            //找會員年度花費總金額
             var orderSummary = await _context.QueryFirstOrDefaultAsync<OrderSummary>(sql3, parameters);
 
 
+            //找會員課程紀錄
             var MemberClassAPIs2 = await _context.QueryAsync<Class, Trainer, Gym, Class>(
                 sql2,
                 (memberClassapi, trainer, gym) =>
@@ -135,32 +130,27 @@ WHERE m.MemberID = @MemberId;
                         memberClassapi.Gyms.Add(gym);
                     }
 
-
                     return memberClassapi;
                 },
                 param: parameters,
                 splitOn: "TrainerId,GymId"
             );
 
-
-           
-
-
-
             if ((MemberClassAPIs1 == null || !MemberClassAPIs1.Any()) &&
-         (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()) &&
-         orderSummary == null) // 增加判斷條件
+                (MemberClassAPIs2 == null || !MemberClassAPIs2.Any()) &&
+                orderSummary == null)
             {
                 return NotFound("No data found");
             }
 
-            // 在回傳的物件中加入TotalOrderAmount
+            // 打包資料
             return Ok(new
             {
                 ClassAPIWithMembers = MemberClassAPIs1,
                 ClassAPIWithTrainersAndClassTyoeAndGyms = MemberClassAPIs2,
-                TotalOrderAmount = orderSummary?.TotalOrderAmount ?? 0 // 使用了null conditional運算符
+                TotalOrderAmount = orderSummary?.TotalOrderAmount ?? 0
             });
         }
+
     }
 }
