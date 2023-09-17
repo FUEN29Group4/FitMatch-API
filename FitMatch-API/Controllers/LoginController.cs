@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Net.Http;
 
 namespace FitMatch_API.Controllers
 {
@@ -99,6 +100,10 @@ namespace FitMatch_API.Controllers
                 {
                     // 進行後續處理，例如設置 session 或發送 token
                     var token = GenerateJwtToken(member.MemberId, "Member");
+                    // 發送 LINE Notify 訊息
+                    string lineNotifyToken = "26Owfwc6FwrvY4ka0fqip7l4KC6zXT5KH5scLJ6JVlK";
+                    await SendLineNotifyMessage("登入成功！", lineNotifyToken);
+
                     return Ok(new { Token = token, Type = "Member", Data = member });
                 }
             }
@@ -182,6 +187,31 @@ namespace FitMatch_API.Controllers
             }
 
             return BadRequest("Invalid user type");
+        }
+
+        private async Task SendLineNotifyMessage(string message, string lineNotifyToken)
+        {
+            using (HttpClient httpClient = new HttpClient())
+            {
+                var content = new FormUrlEncodedContent(new[]
+                {
+            new KeyValuePair<string, string>("message", message)
+        });
+
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {lineNotifyToken}");
+
+                var response = await httpClient.PostAsync("https://notify-api.line.me/api/notify", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    // 處理回應，例如，寫入日誌
+                }
+                else
+                {
+                    // 處理錯誤，例如，寫入日誌
+                }
+            }
         }
 
 
