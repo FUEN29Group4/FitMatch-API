@@ -16,4 +16,6 @@ public partial class CustomerService
     public int? ReceiverId { get; set; }
 
     public string? Role { get; set; }//Trainer or Member
+    public string TrainerPhoto { get; set; }
+    public string MemberPhoto { get; set; }
 }
