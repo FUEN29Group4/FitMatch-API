@@ -132,10 +132,8 @@ namespace FitMatch_API.Controllers
             //找會員年度花費總金額
             var totalOrderAmountResult = await _context.QueryFirstOrDefaultAsync<dynamic>(sql3, parameters);
 
-            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null && (memberFavorites4 == null || !memberFavorites4.Any()))
-            {
-                return NotFound("No data found");
-            }
+
+           
 
 
             //找教練資訊
@@ -172,6 +170,10 @@ namespace FitMatch_API.Controllers
                splitOn: "ProductId"
            );
 
+            if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null && (memberFavorites4 == null || !memberFavorites4.Any()))
+            {
+                return NotFound("No data found");
+            }
 
             // 打包資料
             return Ok(new
