@@ -3,6 +3,8 @@ using FitMatch_API.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.SqlClient;
+using System.Net;
+using System.Numerics;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -76,7 +78,45 @@ namespace FitMatch_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMemberByIdAsync(int id, [FromBody] Member MemberData)
         {
-            const string sql = @"UPDATE Member SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
+            // 初始化一个空的字符串列表来存储需要更新的列
+            List<string> updateClauses = new List<string>();
+
+            // 使用条件语句检查每个要更新的列
+            if (!string.IsNullOrEmpty(MemberData.MemberName))
+            {
+                updateClauses.Add("MemberName = @MemberName");
+            }
+
+            if (!string.IsNullOrEmpty(MemberData.Address))
+            {
+                updateClauses.Add("Address = @Address");
+            }
+
+            if (!string.IsNullOrEmpty(MemberData.Phone))
+            {
+                updateClauses.Add("Phone = @Phone");
+            }
+
+            if (!string.IsNullOrEmpty(MemberData.Email))
+            {
+                updateClauses.Add("Email = @Email");
+            }
+
+            if (!string.IsNullOrEmpty(MemberData.Password))
+            {
+                updateClauses.Add("Password = @Password");
+            }
+
+            if (!string.IsNullOrEmpty(MemberData.Photo))
+            {
+                updateClauses.Add("Photo = @Photo");
+            }
+
+            // 构建SQL查询字符串
+            string updateColumns = string.Join(", ", updateClauses);
+            string sql = $@"UPDATE Member SET {updateColumns} WHERE MemberID = @MemberId;";
+
+            //const string sql = @"UPDATE Member SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
 
             int rowsAffected = await _db.ExecuteAsync(sql,
                 new
