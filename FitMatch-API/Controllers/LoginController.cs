@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace FitMatch_API.Controllers
 {
@@ -83,6 +84,23 @@ namespace FitMatch_API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel loginModel)
         {
+
+            var recaptchaResponse = this.Request.Headers["Recaptcha-Response"];
+            if (string.IsNullOrEmpty(recaptchaResponse))
+            {
+                return BadRequest("reCAPTCHA 驗證失敗.");
+            }
+
+            // 驗證 reCAPTCHA
+            using (HttpClient httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetStringAsync($"https://www.google.com/recaptcha/api/siteverify?secret=6LesMDMoAAAAAI8-lx4Tre6hEdvN9lZAUVWoAv2k&response={recaptchaResponse}");
+                var reCaptchaResult = JsonConvert.DeserializeObject<dynamic>(response);
+                if (!(bool)reCaptchaResult.success)
+                {
+                    return BadRequest("reCAPTCHA 驗證失敗.");
+                }
+            }
 
             // 查詢 Member 表
             var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
