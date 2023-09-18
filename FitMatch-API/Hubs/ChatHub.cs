@@ -1,8 +1,11 @@
-﻿using Dapper;
-using Microsoft.AspNetCore.SignalR;
+﻿using System.Data;
 using System.Data.SqlClient;
-using System.Data;
+using System.Threading.Tasks;
+using Dapper;
 using FitMatch_API.Models;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace FitMatch_API.Hubs
 {
@@ -11,20 +14,29 @@ namespace FitMatch_API.Hubs
         private static readonly Dictionary<string, string> ConnectionMapping = new Dictionary<string, string>();
 
         private readonly IDbConnection _db;
-        public ChatHub(IConfiguration configuration)
+        private readonly ILogger<ChatHub> _logger;  // Logger
+
+        public ChatHub(IConfiguration configuration, ILogger<ChatHub> logger)
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            _logger = logger;
+
+        }
+        public async Task InitializeClient(int senderId)
+        {
+            ConnectionMapping[senderId.ToString()] = Context.ConnectionId;
+            await Clients.Client(Context.ConnectionId).SendAsync("Initialized", true);
         }
 
 
-        //public override async Task OnConnectedAsync()
+        //public override async task onconnectedasync()
         //{
-        //    var httpContext = Context.GetHttpContext();
-        //    var sessionId = httpContext.Request.Headers["Session-Id"].ToString();
-        //    // 保存 ConnectionId 和 sessionId 的关联
-        //    ConnectionMapping[sessionId] = Context.ConnectionId;
+        //    var httpcontext = context.gethttpcontext();
+        //    var sessionid = httpcontext.request.headers["session-id"].tostring();
+        //    // 保存 connectionid 和 sessionid 的关联
+        //    connectionmapping[sessionid] = context.connectionid;
 
-        //    await base.OnConnectedAsync();
+        //    await base.onconnectedasync();
         //}
 
         public void SendMessage(int receiverId, string message, string senderId, string role)
@@ -32,12 +44,14 @@ namespace FitMatch_API.Hubs
             try
             {
 
-                CustomerService customerService = new CustomerService();
-                customerService.DateTime = DateTime.Now;
-                customerService.MessageContent = message;
-                customerService.SenderId = int.Parse(senderId);
-                customerService.ReceiverId = receiverId;
-                customerService.Role = role; // 使用计算得到的接收者角色
+                CustomerService customerService = new CustomerService
+                {
+                    DateTime = DateTime.Now,
+                    MessageContent = message,
+                    SenderId = int.Parse(senderId),
+                    ReceiverId = receiverId,
+                    Role = role
+                };
 
 
                 // 儲存到資料庫
@@ -45,19 +59,37 @@ namespace FitMatch_API.Hubs
 VALUES (@SenderId, @ReceiverId, @MessageContent, @DateTime,@Role)";
                 _db.ExecuteAsync(sql, customerService);
 
-                // 如果有 receiver 的 ConnectionId，則發送消息
+                // Send the message if receiver's ConnectionId exists
+                // 发送消息给接收者
                 if (ConnectionMapping.TryGetValue(receiverId.ToString(), out string receiverConnectionId))
                 {
-                    Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderId, message);
+                    Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderId, message, role);
                 }
-
+                else
+                {
+                    _logger.LogWarning($"No client associated with receiverId: {receiverId}");
+                }
             }
             catch (Exception e)
             {
-                // 輸出錯誤信息
-                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
+                _logger.LogError($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
             }
 
         }
+        public override async Task OnConnectedAsync()
+        {
+            var senderId = Context.GetHttpContext().Request.Headers["senderId"].ToString();
+            ConnectionMapping[senderId] = Context.ConnectionId;
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            var senderId = Context.GetHttpContext().Request.Headers["senderId"].ToString();
+            ConnectionMapping.Remove(senderId);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+
     }
 }

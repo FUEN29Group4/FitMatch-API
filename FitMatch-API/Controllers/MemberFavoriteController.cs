@@ -24,7 +24,7 @@ namespace FitMatch_API.Controllers
             _context = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
 
-        // R: 讀取所有MemberFavorite列表資料 => ok
+        // 讀取所有MemberFavorite列表資料 => ok
         // GET: api/<MemberFavoriteController>
         [HttpGet]
         public async Task<IActionResult> GetALLMemberFavorite()
@@ -47,61 +47,66 @@ namespace FitMatch_API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMemberFavorites(int id)
         {
+            //尋找會員資料
             const string sql1 = @"
-SELECT DISTINCT
-    m.MemberID AS mMemberId,
-    c.MemberID AS cMemberId,
-    c.MemberName,
-    c.Email
-FROM MemberFavorite as m
-LEFT JOIN [Member] as c ON m.MemberID = c.MemberID
-WHERE m.MemberID = @MemberId;
-    ";
-
-            const string sql2 = @"
-SELECT
-    m.MemberID,
-    m.TrainerID,
-
-    t.TrainerID,
-    t.TrainerName,
-    t.Photo,
-    t.Introduce
-
-FROM MemberFavorite as m
-LEFT JOIN Trainers as t ON m.TrainerID = t.TrainerID 
-WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
-    ";
-
-            const string sql4 = @"
-        SELECT
-            m.MemberID,
-            m.ProductID,
-
-
-            p.ProductID,
-            p.ProductName,
-            p.ProductDescription,
-            p.Photo
-
-        FROM MemberFavorite as m
-
-        LEFT JOIN Product as p ON m.ProductID = p.ProductID
-        WHERE m.MemberID = @MemberId  AND m.ProductID IS NOT NULL;
-    ";
-
-
+                SELECT DISTINCT
+                    m.MemberID AS mMemberId,
+                    c.MemberID AS cMemberId,
+                    c.MemberName,
+                    c.Email
+                FROM 
+                    MemberFavorite AS m
+                LEFT JOIN 
+                    [Member] AS c ON m.MemberID = c.MemberID
+                WHERE 
+                    m.MemberID = @MemberId;
+                ";
+                        
+            //尋找會員年度花費
             const string sql3 = @"
-        SELECT 
-            MemberID,
-            SUM(TotalPrice) AS TotalOrderAmount
-        FROM 
-            [Order]
-        WHERE 
-            MemberID = @MemberId
-        GROUP BY 
-            MemberID;
-    ";
+                SELECT 
+                    MemberID,
+                    SUM(TotalPrice) AS TotalOrderAmount
+                FROM 
+                    [Order]
+                WHERE 
+                    MemberID = @MemberId
+                GROUP BY 
+                    MemberID;
+                ";
+            //尋找收藏教練
+            const string sql2 = @"
+                SELECT 
+                    m.MemberID,
+                    m.TrainerID,
+                    t.TrainerID,
+                    t.TrainerName,
+                    t.Photo,
+                    t.Introduce
+                FROM 
+                    MemberFavorite AS m
+                LEFT JOIN 
+                    Trainers AS t ON m.TrainerID = t.TrainerID 
+                WHERE 
+                    m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
+                ";
+            //尋找收藏商品
+            const string sql4 = @"
+                SELECT 
+                    m.MemberID,
+                    m.ProductID,
+                    p.ProductID,
+                    p.ProductName,
+                    p.ProductDescription,
+                    p.Photo
+                FROM 
+                    MemberFavorite AS m
+                LEFT JOIN 
+                    Product AS p ON m.ProductID = p.ProductID
+                WHERE 
+                    m.MemberID = @MemberId AND m.ProductID IS NOT NULL;
+                ";
+
 
 
 
@@ -124,6 +129,13 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
                  splitOn: "mMemberId,cMemberId"
              );
 
+            //找會員年度花費總金額
+            var totalOrderAmountResult = await _context.QueryFirstOrDefaultAsync<dynamic>(sql3, parameters);
+
+
+           
+
+
             //找教練資訊
             var memberFavorites2 = await _context.QueryAsync<MemberFavorite, Trainer, MemberFavorite>(
                 sql2,
@@ -145,7 +157,7 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
                sql4,
                (memberFavorite, product) =>
                {
-                 
+
 
                    if (product != null && product.ProductId != null)
                    {
@@ -158,14 +170,12 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
                splitOn: "ProductId"
            );
 
-            //找會員年度總金額
-            var totalOrderAmountResult = await _context.QueryFirstOrDefaultAsync<dynamic>(sql3, parameters);
-
             if ((memberFavorites1 == null || !memberFavorites1.Any()) && (memberFavorites2 == null || !memberFavorites2.Any()) && totalOrderAmountResult == null && (memberFavorites4 == null || !memberFavorites4.Any()))
             {
                 return NotFound("No data found");
             }
 
+            // 打包資料
             return Ok(new
             {
                 FavoritesWithMembers = memberFavorites1,
@@ -177,29 +187,8 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
         }
 
 
-        //刪除
-        // DELETE api/<MemberFavoriteController>/5
-        // DELETE api/<MemberFavoriteController>/memberId/product/productId
-        [HttpDelete("{memberId}/product/{productId}")]
-        public async Task<IActionResult> DeleteProductFavorite(int memberId, int productId)
-        {
-            // Define SQL statement to delete data with specific MemberID and ProductID
-            const string sql = @"DELETE FROM MemberFavorite WHERE MemberID = @MemberID AND ProductID = @ProductID";
 
-            // Execute the SQL statement
-            var affectedRows = await _context.ExecuteAsync(sql, new { MemberID = memberId, ProductID = productId });
-
-            // Check if any row was deleted
-            if (affectedRows > 0)
-            {
-                return Ok($"Deleted {affectedRows} record(s).");
-            }
-            else
-            {
-                return NotFound($"No record found with MemberID: {memberId} and ProductID: {productId}");
-            }
-        }
-
+        //刪除教練
         // DELETE api/<MemberFavoriteController>/memberId/trainer/trainerId
         [HttpDelete("{memberId}/trainer/{trainerId}")]
         public async Task<IActionResult> DeleteTrainerFavorite(int memberId, int trainerId)
@@ -221,5 +210,27 @@ WHERE m.MemberID = @MemberId AND m.TrainerID IS NOT NULL;
             }
         }
 
+
+        //刪除商品
+        // DELETE api/<MemberFavoriteController>/memberId/product/productId
+        [HttpDelete("{memberId}/product/{productId}")]
+        public async Task<IActionResult> DeleteProductFavorite(int memberId, int productId)
+        {
+            // Define SQL statement to delete data with specific MemberID and ProductID
+            const string sql = @"DELETE FROM MemberFavorite WHERE MemberID = @MemberID AND ProductID = @ProductID";
+
+            // Execute the SQL statement
+            var affectedRows = await _context.ExecuteAsync(sql, new { MemberID = memberId, ProductID = productId });
+
+            // Check if any row was deleted
+            if (affectedRows > 0)
+            {
+                return Ok($"Deleted {affectedRows} record(s).");
+            }
+            else
+            {
+                return NotFound($"No record found with MemberID: {memberId} and ProductID: {productId}");
+            }
+        }
     }
 }
