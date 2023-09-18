@@ -115,39 +115,60 @@ namespace FitMatch_API.Controllers
                 PaymentMethod = orderViewModel.PaymentMethod,
                 ShippingMethod = orderViewModel.ShippingMethod
             };
-
-            // 2. 创建訂單明細
-            var newOrderDetail = new OrderDetail
-            {
-                //OrderDetailId = orderViewModel.OrderDetailId,
-                OrderId = orderViewModel.OrderId,
-                ProductId = orderViewModel.ProductId,
-                Quantity = orderViewModel.Quantity,
-
-            };
-
-            // 使用Dapper执行插入操作，并获取订单编号
+            // 使用Dapper執行插入操作，並獲取訂單編號
             int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
-              VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
-              SELECT SCOPE_IDENTITY();", newOrder);
+        VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
+        SELECT SCOPE_IDENTITY();", newOrder);
 
-            // 2. 将订单明细写入数据库
-            foreach (var item in orderViewModel.OrderDetailIds)
+            // 2. 將訂單明細寫入數據庫
+            foreach (var item in orderViewModel.CartItems) // 注意這裡使用CartItems而不是OrderDetailIds
             {
                 var orderDetail = new OrderDetail
                 {
                     OrderId = orderId,
                     ProductId = item.ProductId,
-                    Quantity = item.Quantity
+                    Quantity = item.Quantity // 購物車中的數量
                 };
 
-                // 使用Dapper执行插入操作
+                // 使用Dapper執行插入操作
                 _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
-                                    VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
+                            VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
             }
 
-            // 返回成功或其他适当的响应
-            return Ok(new { OrderId = orderId }); // 返回订单编号或其他信息
+            // 返回成功或其他適當的響應
+            return Ok(new { OrderId = orderId });
+            //// 2. 创建訂單明細
+            //var newOrderDetail = new OrderDetail
+            //{
+            //    OrderDetailId = orderViewModel.OrderDetailId,
+            //    OrderId = orderViewModel.OrderId,
+            //    ProductId = orderViewModel.ProductId,
+            //    Quantity = orderViewModel.Quantity,
+
+            //};
+
+            //// 使用Dapper执行插入操作，并获取订单编号
+            //int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
+            //  VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
+            //  SELECT SCOPE_IDENTITY();", newOrder);
+
+            //// 2. 将订单明细写入数据库
+            //foreach (var item in orderViewModel.OrderDetailIds)
+            //{
+            //    var orderDetail = new OrderDetail
+            //    {
+            //        OrderId = orderId,
+            //        ProductId = item.ProductId,
+            //        Quantity = item.Quantity
+            //    };
+
+            //    // 使用Dapper执行插入操作
+            //    _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
+            //                        VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
+            //}
+
+            //// 返回成功或其他适当的响应
+            //return Ok(new { OrderId = orderId }); // 返回订单编号或其他信息
         }
     }
 }

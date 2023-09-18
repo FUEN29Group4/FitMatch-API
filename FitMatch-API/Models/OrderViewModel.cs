@@ -29,7 +29,7 @@ public partial class OrderViewModel
     //關於Orderdetils
     public int OrderDetailId { get; set; }//訂單明細編號
 
-    public List<OrderDetail> OrderDetailIds { get; set; }//訂單明細編號
+    public List<OrderDetail> CartItems { get; set; }//訂單明細編號
     public int? ProductId { get; set; }//產品編號
 
     public int? Quantity { get; set; }//數量
