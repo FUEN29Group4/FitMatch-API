@@ -105,7 +105,11 @@ namespace FitMatch_API.Controllers
         {
             // 在这里处理接收到的订单信息
             // orderViewModel 包含了订单相关的数据，例如MemberId、TotalPrice、PaymentMethod、ShippingMethod等
-
+            // 驗證數據
+            if (orderViewModel == null || !ModelState.IsValid)
+            {
+                return BadRequest("Invalid data.");
+            }
             // 1. 创建新订单
             var newOrder = new Order
             {
