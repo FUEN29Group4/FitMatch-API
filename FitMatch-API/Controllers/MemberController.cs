@@ -76,7 +76,7 @@ namespace FitMatch_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMemberByIdAsync(int id, [FromBody] Member MemberData)
         {
-            const string sql = @"UPDATE Members SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
+            const string sql = @"UPDATE Member SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
 
             int rowsAffected = await _db.ExecuteAsync(sql,
                 new
