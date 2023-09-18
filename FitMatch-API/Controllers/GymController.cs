@@ -21,7 +21,7 @@ namespace FitMatch_API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
-            const string sql = @"SELECT TOP 3 * FROM Gyms";
+            const string sql = @"SELECT * FROM Gyms";
 
             using (var multi = await _db.QueryMultipleAsync(sql))
             {

@@ -10,7 +10,7 @@ public partial class CartViewModel
     //關於訂單 oreder
     public int OrderId { get; set; }//訂單編號
     public int? MemberId { get; set; }//會員編號
-    public int? TotalPrice { get; set; }//訂單總價
+    public Decimal? TotalPrice { get; set; }//訂單總價
     public DateTime? OrderTime { get; set; }//訂單時間
     public string? PaymentMethod { get; set; }//支付方式
     public string? ShippingMethod { get; set; }//運送方式
@@ -29,7 +29,7 @@ public partial class CartViewModel
     //public int ProductId { get; set; }//商品編號
     public string? ProductName { get; set; }//商品名稱
     public string? ProductDescription { get; set; }//商品描述
-    public int? Price { get; set; }//價格
+    public Decimal? Price { get; set; }//價格
     public int? TypeId { get; set; }//商品類別編號
     public int? ProductInventory { get; set; }//商品庫存
     public bool? Approved { get; set; }//審核通過與否
