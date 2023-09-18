@@ -50,6 +50,22 @@ namespace FitMatch_API.Controllers
                 return Ok(TrainerClass);
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> GetAllGym()
+        {
+            const string sql = @"select GymID,GymName,Phone,Address,OpentimeStart,OpentimeEnd,Approved,GymDescription from Gyms; ";
+
+            using (var multi = await _db.QueryMultipleAsync(sql))
+            {
+                var gyms = multi.Read<Gym>().ToList();
+                // 基本驗證，確保資料存在
+                if (gyms == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(gyms);
+            }
+        }
         //[HttpGet]
         //public async Task<IActionResult> GetAllGym()
         //{
