@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper;
+using System.Numerics;
 
 namespace FitMatch_API.Controllers
 {
@@ -20,7 +21,7 @@ namespace FitMatch_API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTrainerByIdAsync(int id)
         {
-            const string sql = @"SELECT * FROM Trainers WHERE TrainerId = @TrainerId";
+            const string sql = @"SELECT TrainerID,TrainerName,Phone,Address,Photo,CourseFee,Introduce,Certificate,Expertise,Experience,Salt FROM Trainers where TrainerID = @TrainerId";
 
             var trainer = await _db.QueryFirstOrDefaultAsync<Trainer>(sql, new { TrainerId = id });
 
@@ -28,6 +29,8 @@ namespace FitMatch_API.Controllers
             {
                 return NotFound("No data found");
             }
+
+
             return Ok(trainer);
         }
         [HttpGet]
@@ -85,12 +88,14 @@ namespace FitMatch_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTrainerByIdAsync(int id, [FromBody] Trainer trainerData)
         {
-            const string sql = @"UPDATE Trainers SET TrainerName = @TrainerName, Address = @Address, Certificate = @Certificate, Expertise = @Expertise, CourseFee = @CourseFee, Introduce = @Introduce, Experience = @Experience, photo = @Photo WHERE TrainerID = @TrainerId;";
+            const string sql = @"UPDATE Trainers SET Phone=@Phone, TrainerName = @TrainerName, Address = @Address, Certificate = @Certificate, Expertise = @Expertise, CourseFee = @CourseFee, Introduce = @Introduce, Experience = @Experience, photo = @Photo ,Salt = @Salt WHERE TrainerID = @TrainerId;";
 
             int rowsAffected = await _db.ExecuteAsync(sql,
                 new
                 {
+                    
                     TrainerId = id,
+                    Phone = trainerData.Phone,
                     TrainerName = trainerData.TrainerName,
                     Address = trainerData.Address,
                     Certificate = trainerData.Certificate,
@@ -98,7 +103,8 @@ namespace FitMatch_API.Controllers
                     CourseFee = trainerData.CourseFee,
                     Introduce = trainerData.Introduce,
                     Experience = trainerData.Experience,
-                    Photo = trainerData.Photo
+                    Photo = trainerData.Photo,
+                    Salt = trainerData.Salt
                 });
 
             if (rowsAffected == 0)
