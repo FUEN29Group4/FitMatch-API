@@ -273,12 +273,34 @@ namespace FitMatch_API.Controllers
                     return BadRequest("Invalid token");
                 }
 
-                // 查詢數據庫以找到對應的用戶
-                var sql = @"SELECT * FROM Member WHERE Email = @Email";  // 你也可能需要查找 Trainer
-                var parameters = new { Email = email };
-                var user = await _db.QuerySingleOrDefaultAsync<Member>(sql, parameters);
+                string updateSql = null;
+                string userType = null;
 
-                if (user == null)
+                // Check the database for Member first
+                var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
+                var memberParameters = new { Email = email };
+                var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
+
+                if (member != null)
+                {
+                    updateSql = @"UPDATE Member SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                    userType = "Member";
+                }
+                else
+                {
+                    // If Member not found, check for Trainer
+                    var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email";
+                    var trainerParameters = new { Email = email };
+                    var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
+
+                    if (trainer != null)
+                    {
+                        updateSql = @"UPDATE Trainers SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                        userType = "Trainer";
+                    }
+                }
+
+                if (userType == null)
                 {
                     return BadRequest("User not found");
                 }
@@ -290,18 +312,17 @@ namespace FitMatch_API.Controllers
                     rng.GetBytes(salt);
                     var newHashedPassword = HashPassword(newPassword, Convert.ToBase64String(salt));
 
-                    // 更新數據庫
-                    var updateSql = @"UPDATE Member SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                    // Update the database
                     var updateParameters = new { Password = newHashedPassword, Salt = Convert.ToBase64String(salt), Email = email };
                     var affectedRows = await _db.ExecuteAsync(updateSql, updateParameters);
 
                     if (affectedRows > 0)
                     {
-                        return Ok("密碼重置成功");
+                        return Ok($"{userType} 密碼重置成功");
                     }
                     else
                     {
-                        return BadRequest("密碼重置失敗");
+                        return BadRequest($"{userType} 密碼重置失敗");
                     }
                 }
             }
