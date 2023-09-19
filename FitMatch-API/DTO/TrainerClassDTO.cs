@@ -23,5 +23,6 @@
         public string GymName { get; set; }
         public string MemberName { get; set; }
         public string ClassName { get; set; }
+        public int CourseUnitPrice { get; set;}
     }
 }
