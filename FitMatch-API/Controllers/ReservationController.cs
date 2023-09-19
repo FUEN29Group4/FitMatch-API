@@ -132,5 +132,40 @@ namespace FitMatch_API.Controllers
             public int MemberId { get; set; }
         }
 
+        //從課程預約之週曆 讀取教練
+        [HttpGet("MatchGym/{id}")]
+        public async Task<IActionResult> GetGymId(int id)
+        {
+            // 參數化查詢，防止SQL注入
+            string sql = @"SELECT c.*, t.TrainerId, t.TrainerName ,t.Photo
+                            FROM Class as c
+                            LEFT JOIN Trainers as t ON c.TrainerId = t.TrainerId
+                            WHERE c.GymId = @GymId;";
+
+            var parameters = new { GymId = id };
+            var lookup = new Dictionary<int, Class>();
+
+            await _db.QueryAsync<Class, Trainer, Class>(sql,
+                (c, t) =>
+                {
+                    Class classEntry;
+
+                    if (!lookup.TryGetValue(c.ClassId, out classEntry))
+                    {
+                        lookup.Add(c.ClassId, classEntry = c);
+                    }
+
+                    if (classEntry.Trainers == null)
+                        classEntry.Trainers = new List<Trainer>();
+
+                    classEntry.Trainers.Add(t); // Add trainer to list
+                    return classEntry;
+                }, splitOn: "TrainerId", param: parameters);
+
+            var resultList = lookup.Values;
+
+            return Ok(resultList);
+        }
+
     }
 }
