@@ -23,25 +23,6 @@ using static FitMatch_API.Models.MemberFavorite;
 namespace FitMatch_API.Controllers
 {
 
-
-    //=========做一個session，記錄一些暫存的資料（登入/購物車）=========
-    //public static class SessionExtensions
-    //{
-    //    //物件轉字串（json）
-    //    public static void Set<T>(this ISession session, string key, T value)
-    //    {
-    //        session.SetString(key, JsonSerializer.Serialize(value));
-    //    }
-
-    //（json）字串轉物件
-    //    public static T Get<T>(this ISession session, string key)
-    //    {
-    //        var value = session.GetString(key);
-    //        return value == null ? default(T) : JsonSerializer.Deserialize<T>(value);
-    //    }
-    //}
-
-
     [Route("api/[controller]")]
     [ApiController]
     public partial class OrderAPIController : Controller

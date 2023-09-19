@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Dapper;
 using FitMatch_API.Models;
+using static FitMatch_API.Controllers.ProductAPIController;
+
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -29,6 +31,8 @@ namespace FitMatch_API.Controllers
         }
 
 
+
+        //讀取全部商品 => 給商城頁面使用
         [HttpGet]
         public async Task<IActionResult> Products()
         {
@@ -45,6 +49,27 @@ namespace FitMatch_API.Controllers
                 return Ok(products);
             }
         }
+
+
+
+        //讀取特定商品 => 給商品詳細頁面使用
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProduct(int id)
+        {
+            const string sql = @"SELECT * FROM Product WHERE ProductId = @ProductId";
+
+            using (var multi = await _context.QueryMultipleAsync(sql, new { ProductId = id }))
+            {
+                var product = multi.Read<Product>().FirstOrDefault();
+                // 基本驗證，確保資料存在
+                if (product == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(product);
+            }
+        }
+
 
 
 
