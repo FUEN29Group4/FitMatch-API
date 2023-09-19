@@ -220,7 +220,7 @@ namespace FitMatch_API.Controllers
 
         private async Task SendResetPasswordEmail(string email, string token)
         {
-            var resetLink = $"https://localhost:7088/ForgotPassword/ForgotPassword?token={token}";
+            var resetLink = $"https://localhost:7088/ResetPassword/ResetPassword?token={token}";
 
             // 初始化 SmtpClient
             using (SmtpClient smtp = new SmtpClient())
@@ -243,6 +243,74 @@ namespace FitMatch_API.Controllers
                 }
             }
         }
+
+
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordConfirmModel model)
+        {
+            var token = model.Token;
+            var newPassword = model.NewPassword;
+
+            // 驗證和解析 JWT 令牌
+            var handler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("FitMatch123456789123456789123456789");
+            var validations = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false
+            };
+
+            SecurityToken validatedToken;
+            try
+            {
+                var claims = handler.ValidateToken(token, validations, out validatedToken);
+                var email = claims.FindFirst(ClaimTypes.Name)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid token");
+                }
+
+                // 查詢數據庫以找到對應的用戶
+                var sql = @"SELECT * FROM Member WHERE Email = @Email";  // 你也可能需要查找 Trainer
+                var parameters = new { Email = email };
+                var user = await _db.QuerySingleOrDefaultAsync<Member>(sql, parameters);
+
+                if (user == null)
+                {
+                    return BadRequest("User not found");
+                }
+
+                // 生成新的哈希密碼和 Salt
+                using (var rng = new RNGCryptoServiceProvider())
+                {
+                    byte[] salt = new byte[16];
+                    rng.GetBytes(salt);
+                    var newHashedPassword = HashPassword(newPassword, Convert.ToBase64String(salt));
+
+                    // 更新數據庫
+                    var updateSql = @"UPDATE Member SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                    var updateParameters = new { Password = newHashedPassword, Salt = Convert.ToBase64String(salt), Email = email };
+                    var affectedRows = await _db.ExecuteAsync(updateSql, updateParameters);
+
+                    if (affectedRows > 0)
+                    {
+                        return Ok("密碼重置成功");
+                    }
+                    else
+                    {
+                        return BadRequest("密碼重置失敗");
+                    }
+                }
+            }
+            catch
+            {
+                return BadRequest("Invalid token");
+            }
+        }
+
 
 
         private async Task SendLineNotifyMessage(string message, string lineNotifyToken)
