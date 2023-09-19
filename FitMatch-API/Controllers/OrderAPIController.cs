@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 
 //Debug類要加的命名空間
 using System.Diagnostics;
+using static FitMatch_API.Models.MemberFavorite;
 
 
 
@@ -42,6 +43,7 @@ namespace FitMatch_API.Controllers
 
 
     [Route("api/[controller]")]
+    [ApiController]
     public partial class OrderAPIController : Controller
     {
 
@@ -93,6 +95,111 @@ namespace FitMatch_API.Controllers
                 return Ok(order);
             }
         }
+
+
+        //查會員訂單
+        [HttpGet("Order")]
+        public async Task<IActionResult> GetMemberOrder(int id)
+        {
+            //會員訂單
+            const string sqlOrder = @"
+              SELECT
+                   o.OrderID,
+                   o.MemberID,
+                   o.TotalPrice,
+                   o.OrderTime,
+                   o.PaymentMethod,
+                   o.ShippingMethod,
+                   o.PayTime,
+            
+            m.MemberName
+                FROM [Order] AS o
+            
+                LEFT JOIN Member AS m ON o.MemberID = m.MemberID
+            
+                WHERE o.MemberID = @MemberId;
+            ";
+
+            var parameters = new { MemberId = id };
+
+            //會員訂單
+            var MemberOrder = await _context.QueryAsync<Order, Member, Order>(
+               sqlOrder,
+               (memberorder, member) =>
+               {
+                   if (member != null && member.MemberId != null)
+                   {
+                       memberorder.Members.Add(member);
+                   }
+                   return memberorder;
+               },
+               param: parameters,
+               splitOn: "MemberId"
+           );
+
+            if ((MemberOrder == null || !MemberOrder.Any()))
+            {
+                return NotFound("No data found");
+            }
+
+            // 打包資料
+            return Ok(new
+            {
+                OrderWithMember = MemberOrder
+            });
+        }
+
+        //查會員訂單明細
+        [HttpGet("OrderDetail")]
+        public async Task<IActionResult> GetMemberOrderDetail(int id)
+        {
+            //查訂單明細
+            const string sqlOrderDetail = @"
+              SELECT
+                  od.OrderID,
+                  od.OrdetailId,
+                  od.ProductId,
+                  od.Quantity,
+
+                  p.Productname,
+                  p.Price
+
+                   FROM OrderDetail AS od
+
+                 LEFT JOIN Product AS p ON od.ProductId = p.ProductId
+
+                 WHERE od.OrderID = @OrderID;
+                ";
+            var parameters = new { OrderID = id };
+
+            //查訂單明細
+            var MemberOrderDetail = await _context.QueryAsync<Order, Product, Order>(
+               sqlOrderDetail,
+               (orderdetail, product) =>
+               {
+                   if (product != null && product.ProductId != null)
+                   {
+                       orderdetail.Products.Add(product);
+                   }
+                   return orderdetail;
+               },
+               param: parameters,
+               splitOn: "OrdetailId"
+           );
+
+            if ((MemberOrderDetail == null || !MemberOrderDetail.Any()))
+            {
+                return NotFound("No data found");
+            }
+
+            // 打包資料
+            return Ok(new
+            {
+                OrderWithMember = MemberOrderDetail
+            });
+
+        }
+
 
 
 

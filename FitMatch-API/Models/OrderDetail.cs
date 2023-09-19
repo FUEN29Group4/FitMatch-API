@@ -14,5 +14,13 @@ namespace FitMatch_API.Models
 
         public int? Quantity { get; set; }//數量
 
+        public string? ProductName { get; set; }//商品名稱
+
+        public int? Price { get; set; }//價格
+
+
+
+        public List<Product> Products { get; set; } = new List<Product>();
+
     }
 }

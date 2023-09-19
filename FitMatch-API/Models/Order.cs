@@ -20,4 +20,21 @@ public partial class Order
 
 
     public DateTime? PayTime { get; set; }//付款時間
+
+
+    public string? MemberName { get; set; }
+
+
+    public int ProductId { get; set; }//商品編號
+
+    public string? ProductName { get; set; }//商品名稱
+
+    public int? Price { get; set; }//價格
+
+
+    public List<Member> Members { get; set; }
+ = new List<Member>();
+
+
+    public List<Product> Products { get; set; } = new List<Product>();
 }
