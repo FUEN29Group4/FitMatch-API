@@ -233,7 +233,7 @@ namespace FitMatch_API.Controllers
                 // 初始化 MailMessage
                 using (MailMessage message = new MailMessage())
                 {
-                    message.From = new MailAddress("YourGmailEmail@gmail.com");
+                    message.From = new MailAddress("YourGmailEmail@gmail.com", "FitMatch@gmail.com");
                     message.To.Add(email);
                     message.Subject = "密碼重置";
                     message.Body = $"請點選連結重置您的密碼: {resetLink}";
