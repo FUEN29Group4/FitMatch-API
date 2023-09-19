@@ -176,7 +176,7 @@ namespace FitMatch_API.Controllers
             // 打包資料
             return Ok(new
             {
-                OrderWithMember = MemberOrderDetail
+                OrderDetailWithMember = MemberOrderDetail
             });
 
         }
