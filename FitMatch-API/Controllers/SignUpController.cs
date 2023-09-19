@@ -6,6 +6,7 @@ using System.Data;
 using Dapper;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
+using System.Linq;
 
 
 namespace FitMatch_API.Controllers
@@ -28,6 +29,14 @@ namespace FitMatch_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest("Invalid model");
+            }
+
+            // 檢查兩個資料表裡面有沒有重複的E-mail
+            var duplicateEmailCheckSql = @"SELECT COUNT(*) FROM Trainers WHERE Email = @Email UNION ALL SELECT COUNT(*) FROM Member WHERE Email = @Email";
+            var duplicateCount = await _db.QueryAsync<int>(duplicateEmailCheckSql, new { Email = signUpModel.Email });
+            if (duplicateCount.Any(count => count > 0))
+            {
+                return BadRequest("Email 已經被註冊過了");
             }
 
             // Generate a salt

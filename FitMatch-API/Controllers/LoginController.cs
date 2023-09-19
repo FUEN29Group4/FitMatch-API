@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Net.Mail;
 
 namespace FitMatch_API.Controllers
 {
@@ -45,41 +46,7 @@ namespace FitMatch_API.Controllers
             return tokenHandler.WriteToken(token);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAllAsync()
-        //{//這裡怪怪 不能讓別人查到沒有token就能有的資料
-        //    const string sql = @"SELECT * FROM Member";
-
-        //    using (var multi = await _db.QueryMultipleAsync(sql))
-        //    {
-        //        var Member = multi.Read<Member>().ToList();
-        //        // 基本驗證，確保資料存在
-        //        if (Member == null)
-        //        {
-        //            return NotFound("No data found");
-        //        }
-        //        return Ok(Member);
-        //    }
-        //}
-
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetMember(int id)
-        //{//這裡怪怪 不能讓別人查到沒有token就能有的帳密
-        //    const string sql = @"SELECT MemberId,Email,Password FROM Member WHERE MemberId = @MemberId";
-        //    var parameters = new { MemberId = id };
-
-        //    using (var multi = await _db.QueryMultipleAsync(sql, parameters))
-        //    {
-        //        var member = multi.Read<Member>().FirstOrDefault();
-        //        // 基本驗證，確保資料存在
-        //        if (member == null)
-        //        {
-        //            return NotFound("No data found");
-        //        }
-        //        return Ok(member);
-        //    }
-        //}
-
+       
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel loginModel)
@@ -206,6 +173,166 @@ namespace FitMatch_API.Controllers
 
             return BadRequest("Invalid user type");
         }
+
+        [HttpPost("requestResetPassword")]
+        public async Task<IActionResult> RequestResetPassword([FromBody] ResetPasswordModel model)
+        {
+
+            // 查詢 Member 表
+            var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
+            var memberParameters = new { Email = model.Email };
+
+            var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
+
+            // 查詢 Trainer 表
+            var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email";
+            var trainerParameters = new { Email = model.Email };
+
+            var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
+
+            if (member == null && trainer == null)
+            {
+                return BadRequest("該 Email 地址未註冊");
+            }
+
+            // 生成 JWT
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("FitMatch123456789123456789123456789"); 
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+            new Claim(ClaimTypes.Name, model.Email)
+                }),
+                Expires = DateTime.UtcNow.AddMinutes(5),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var resetToken = tokenHandler.WriteToken(token);
+
+            // 發送 Email（這個您需要自己實現）
+            await SendResetPasswordEmail(model.Email, resetToken);
+
+            return Ok();
+        }
+
+
+        private async Task SendResetPasswordEmail(string email, string token)
+        {
+            var resetLink = $"https://localhost:7088/ResetPassword/ResetPassword?token={token}";
+
+            // 初始化 SmtpClient
+            using (SmtpClient smtp = new SmtpClient())
+            {
+                smtp.Host = "smtp.gmail.com";
+                smtp.Port = 587;
+                smtp.EnableSsl = true;
+                smtp.Credentials = new System.Net.NetworkCredential("s90382s@gmail.com", "rher aggj hmej rgma");
+
+                // 初始化 MailMessage
+                using (MailMessage message = new MailMessage())
+                {
+                    message.From = new MailAddress("YourGmailEmail@gmail.com");
+                    message.To.Add(email);
+                    message.Subject = "密碼重置";
+                    message.Body = $"請點選連結重置您的密碼: {resetLink}";
+
+                    // 發送郵件
+                    await smtp.SendMailAsync(message);
+                }
+            }
+        }
+
+
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordConfirmModel model)
+        {
+            var token = model.Token;
+            var newPassword = model.NewPassword;
+
+            // 驗證和解析 JWT 令牌
+            var handler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("FitMatch123456789123456789123456789");
+            var validations = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false
+            };
+
+            SecurityToken validatedToken;
+            try
+            {
+                var claims = handler.ValidateToken(token, validations, out validatedToken);
+                var email = claims.FindFirst(ClaimTypes.Name)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid token");
+                }
+
+                string updateSql = null;
+                string userType = null;
+
+                // Check the database for Member first
+                var memberSql = @"SELECT * FROM Member WHERE Email = @Email";
+                var memberParameters = new { Email = email };
+                var member = await _db.QuerySingleOrDefaultAsync<Member>(memberSql, memberParameters);
+
+                if (member != null)
+                {
+                    updateSql = @"UPDATE Member SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                    userType = "Member";
+                }
+                else
+                {
+                    // If Member not found, check for Trainer
+                    var trainerSql = @"SELECT * FROM Trainers WHERE Email = @Email";
+                    var trainerParameters = new { Email = email };
+                    var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(trainerSql, trainerParameters);
+
+                    if (trainer != null)
+                    {
+                        updateSql = @"UPDATE Trainers SET Password = @Password, Salt = @Salt WHERE Email = @Email";
+                        userType = "Trainer";
+                    }
+                }
+
+                if (userType == null)
+                {
+                    return BadRequest("User not found");
+                }
+
+                // 生成新的哈希密碼和 Salt
+                using (var rng = new RNGCryptoServiceProvider())
+                {
+                    byte[] salt = new byte[16];
+                    rng.GetBytes(salt);
+                    var newHashedPassword = HashPassword(newPassword, Convert.ToBase64String(salt));
+
+                    // Update the database
+                    var updateParameters = new { Password = newHashedPassword, Salt = Convert.ToBase64String(salt), Email = email };
+                    var affectedRows = await _db.ExecuteAsync(updateSql, updateParameters);
+
+                    if (affectedRows > 0)
+                    {
+                        return Ok($"{userType} 密碼重置成功");
+                    }
+                    else
+                    {
+                        return BadRequest($"{userType} 密碼重置失敗");
+                    }
+                }
+            }
+            catch
+            {
+                return BadRequest("Invalid token");
+            }
+        }
+
+
 
         private async Task SendLineNotifyMessage(string message, string lineNotifyToken)
         {
