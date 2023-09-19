@@ -25,10 +25,9 @@ namespace FitMatch_API.Controllers
     public class ArticleController : ControllerBase
     {
 
-        [HttpGet]
-        public async Task<IActionResult> GetGoogleNews()
+        [HttpGet("sport")]
+        public async Task<IActionResult> Getsport()
         {
-           
             try
             {
                 string url = "https://newsapi.org/v2/top-headlines?category=sport&country=tw&apiKey=5aa14d4235a64247940a4418047a5153";
@@ -54,18 +53,62 @@ namespace FitMatch_API.Controllers
                         }
                         else
                         {
-                            return NotFound("没有找到新闻文章");
+                            return NotFound("沒有找到新聞文章");
                         }
                     }
                     else
                     {
-                        return StatusCode((int)response.StatusCode, "无法获取新闻数据");
+                        return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
                     }
                 //}
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"内部服务器错误: {ex.Message}");
+                return StatusCode(500, $"內部服務器錯誤: {ex.Message}");
+            }
+        }
+
+        
+        [HttpGet("healthy")]
+        public async Task<IActionResult> Gethealthy()
+        {
+            try
+            {
+                string url = "https://newsapi.org/v2/everything?q=%E5%81%A5%E5%BA%B7&searchIn=title&language=zh&from=2023-09-15&sortBy=publishedAt&apiKey=5aa14d4235a64247940a4418047a5153";
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(url);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Add("user-agent", "News-API-csharp/0.1");
+                //using (HttpClient client = new HttpClient())
+                //{
+                HttpResponseMessage response = await client.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonContent = await response.Content.ReadAsStringAsync();
+
+                    // 解析JSON数据
+                    var newsResponse = JsonConvert.DeserializeObject<NewsApiResponse>(jsonContent);
+
+                    // 检查响应中是否有文章
+                    if (newsResponse.articles != null)
+                    {
+                        return Ok(newsResponse.articles);
+                    }
+                    else
+                    {
+                        return NotFound("沒有找到新聞文章");
+                    }
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
+                }
+                //}
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"內部服務器錯誤: {ex.Message}");
             }
         }
 

@@ -28,5 +28,7 @@ namespace FitMatch_API.Models
         public string? Photo { get; set; }//照片
 
 
+        //public List<Product> Products { get; set; } 
+
     }
 }
