@@ -18,11 +18,10 @@
 
         public int TrainerID { get; set;}
         public string TrainerName { get; set;}
-
+        public string Address {get; set;}
         // 額外的屬性
         public string GymName { get; set; }
         public string MemberName { get; set; }
-        public string ClassName { get; set; }
         public int CourseUnitPrice { get; set;}
     }
 }

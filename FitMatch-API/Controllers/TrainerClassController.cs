@@ -28,10 +28,8 @@ namespace FitMatch_API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAllTrainerClass(int id)
         {
-            const string sql = @"SELECT a.ClassID, a.CourseStatus,a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
-                    b.GymID, b.GymName,b.OpentimeStart,b.OpentimeEnd,
-                    c.MemberID, c.MemberName, 
-                     
+            const string sql = @"SELECT a.ClassID, a.CourseStatus,a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, b.GymID, b.GymName,b.Address,b.OpentimeStart,b.OpentimeEnd,
+                    c.MemberID, c.MemberName,                   
                     e.TrainerName,e.TrainerID
                     FROM Class AS a
                     INNER JOIN Gyms AS b ON a.GymID = b.GymID
