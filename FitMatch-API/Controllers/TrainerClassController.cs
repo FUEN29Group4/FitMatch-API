@@ -65,7 +65,31 @@ namespace FitMatch_API.Controllers
                 return Ok(gyms);
             }
         }
- 
+        [HttpGet("detail/{id}")]
+        public async Task<IActionResult> GetDetailById(int id)
+        {
+            const string sql = @"SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
+       b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
+       c.MemberID, c.MemberName, 
+       e.TrainerName, e.TrainerID
+        FROM Class AS a
+        INNER JOIN Gyms AS b ON a.GymID = b.GymID
+        INNER JOIN Member AS c ON a.MemberID = c.MemberID
+        INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
+                    WHERE a.TrainerID = @TrainerId ;";
+            var parameters = new { TrainerId = id };
+
+            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+            {
+                var TrainerClass = multi.Read<TrainerClassDTO>().ToList();
+                if (TrainerClass == null || TrainerClass.Count == 0)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(TrainerClass);
+            }
+        }
+
 
 
 
