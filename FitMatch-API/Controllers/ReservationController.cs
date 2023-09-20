@@ -140,7 +140,7 @@ namespace FitMatch_API.Controllers
             string sql = @"SELECT c.*, t.TrainerId, t.TrainerName ,t.Photo
                             FROM Class as c
                             LEFT JOIN Trainers as t ON c.TrainerId = t.TrainerId
-                            WHERE c.GymId = @GymId;";
+                            WHERE c.GymId = @GymId AND t.approved = 1;";
 
             var parameters = new { GymId = id };
             var lookup = new Dictionary<int, Class>();
