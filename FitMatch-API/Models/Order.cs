@@ -32,9 +32,11 @@ public partial class Order
     public int? Price { get; set; }//價格
 
 
-    public List<Member> Members { get; set; }
- = new List<Member>();
-
-
+    public List<Member> Members { get; set; }= new List<Member>();
     public List<Product> Products { get; set; } = new List<Product>();
+
+
+    public bool? Status { get; set; }//狀態
+
+   
 }
