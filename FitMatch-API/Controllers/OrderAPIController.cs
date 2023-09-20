@@ -149,7 +149,9 @@ namespace FitMatch_API.Controllers
                   od.OrdetailId,
                   od.ProductId,
                   od.Quantity,
+                  
 
+                  p.ProductId,
                   p.Productname,
                   p.Price
 
