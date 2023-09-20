@@ -82,18 +82,25 @@ namespace FitMatch_API.Controllers
         [HttpGet("Order")]
         public async Task<IActionResult> GetMemberOrder(int id)
         {
+
+            if (id <= 0)
+            {
+                return BadRequest("Invalid ID provided.");
+            }
+
             //會員訂單
             const string sqlOrder = @"
               SELECT
                    o.OrderID,
-                   o.MemberID,
+                   o.MemberID AS oMemberId,
                    o.TotalPrice,
                    o.OrderTime,
                    o.PaymentMethod,
                    o.ShippingMethod,
                    o.PayTime,
-            
-            m.MemberName
+
+                   m.MemberID AS mMemberId,
+                   m.MemberName
                 FROM [Order] AS o
             
                 LEFT JOIN Member AS m ON o.MemberID = m.MemberID
@@ -115,7 +122,7 @@ namespace FitMatch_API.Controllers
                    return memberorder;
                },
                param: parameters,
-               splitOn: "MemberId"
+               splitOn: "oMemberId,mMemberId"
            );
 
             if ((MemberOrder == null || !MemberOrder.Any()))
@@ -128,6 +135,7 @@ namespace FitMatch_API.Controllers
             {
                 OrderWithMember = MemberOrder
             });
+
         }
 
         //查會員訂單明細
