@@ -12,6 +12,7 @@ public partial class Order
 
     public decimal? TotalPrice { get; set; }//訂單總價
 
+
     public DateTime? OrderTime { get; set; }//訂單時間
 
     public string? PaymentMethod { get; set; }//支付方式

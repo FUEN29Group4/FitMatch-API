@@ -40,6 +40,8 @@ namespace FitMatch_API.Controllers
             _context = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
 
+
+
         // R: 讀取所有Order列表資料 => ok
         [HttpGet]
         public async Task<IActionResult> GetALLOrder()
@@ -58,7 +60,7 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        // R: 讀取特定的Order資料 => ok
+        // R: # 讀取特定的Order資料 => ok
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder(int id)
         {
@@ -68,11 +70,32 @@ namespace FitMatch_API.Controllers
             using (var multi = await _context.QueryMultipleAsync(sql, parameters))
             {
                 var order = multi.Read<Order>().FirstOrDefault();
+
+                // # 將訂單資訊填充到ViewData中，以便在視圖中使用
+                //ViewData["MerchantID"] = order.MerchantID;
+                //ViewData["MerchantOrderNo"] = order.MerchantOrderNo;
+                //ViewData["ItemDesc"] = order.ItemDesc;
+                //ViewData["Amt"] = order.Amt;
+                //ViewData["ExpireDate"] = order.ExpireDate;
+                //ViewData["ClientBackURL"] = order.ClientBackURL;
+                //ViewData["Email"] = order.Email;
+
+                //ViewData["MemberId"] = order.MemberId;
+                //ViewData["MemberName"] = order.MemberName;
+                ////ViewData["Phone"] = order.Phone;
+                ////ViewData["Email"] = order.Email;
+
+                //ViewData["OrderId"] = order.OrderId;
+                //ViewData["Atm"] = order.TotalPrice;
+                //ViewData["OrderTime"] = order.OrderTime;
+
                 // 基本驗證，確保資料存在
                 if (order == null)
                 {
                     return NotFound("No data found");
                 }
+
+                // #return Ok(order);
                 return Ok(order);
             }
         }

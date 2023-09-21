@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Data;
 using Dapper;
 using System.Numerics;
+using static FitMatch_API.Controllers.ReservationController;
 
 namespace FitMatch_API.Controllers
 {
@@ -115,21 +116,42 @@ namespace FitMatch_API.Controllers
             }
             return Ok(new { status = "success", message = "教練資訊已成功更新" });
         }
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetTrainerAsync(int id)
-        //{
-        //    const string sql = @"SELECT * FROM Trainers Where Trainer = @TrainerId";
+        [HttpPost("FavoriteTrainer")]
+        public async Task<IActionResult> InsertFavoriteTrainer([FromBody] FavoriteTrainer favoriteTrainer)
+        {//接收教練收藏
+            if (favoriteTrainer == null)
+            {
+                return BadRequest("找不到data");
+            }
+            string sql = @"insert into MemberFavorite(MemberID,TrainerID) values (@MemberId,@TrainerId);";
 
-        //    using (var multi = await _db.QueryMultipleAsync(sql))
-        //    {
-        //        var trainers = multi.Read<Trainer>().ToList();
-        //        // 基本驗證，確保資料存在
-        //        if (trainers == null)
-        //        {
-        //            return NotFound("No data found");
-        //        }
-        //        return Ok(trainers);
-        //    }
-        //}
+            var parameters = new
+            {
+                MemberId = favoriteTrainer.MemberId,
+                TrainerId = favoriteTrainer.TrainerId,
+            };
+            try
+            {
+                int rowsAffected = await _db.ExecuteAsync(sql, parameters);
+
+                if (rowsAffected > 0)
+                {
+                    return Ok("收藏成功");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"錯誤訊息: {ex}");
+            }
+
+            return BadRequest("無法加入收藏");
+        }
+        // 接收的模型
+        public class FavoriteTrainer
+        {
+            public int MemberId { get; set; }
+            public int TrainerId { get; set; }
+        }
+
     }
 }
