@@ -58,6 +58,7 @@ namespace FitMatch_API.Controllers
         {
             const string sql = @"SELECT * FROM Product WHERE ProductId = @ProductId";
 
+            
             using (var multi = await _context.QueryMultipleAsync(sql, new { ProductId = id }))
             {
                 var product = multi.Read<Product>().FirstOrDefault();

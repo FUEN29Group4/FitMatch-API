@@ -193,10 +193,6 @@ namespace FitMatch_API.Controllers
 
 
 
-
-
-
-
         //======= 建立訂單 test  =======
         [HttpPost]
         public IActionResult CreateOrder([FromBody] OrderViewModel orderViewModel)
@@ -239,173 +235,12 @@ namespace FitMatch_API.Controllers
 
             // 返回成功或其他適當的響應
             return Ok(new { OrderId = orderId });
-            //// 2. 创建訂單明細
-            //var newOrderDetail = new OrderDetail
-            //{
-            //    OrderDetailId = orderViewModel.OrderDetailId,
-            //    OrderId = orderViewModel.OrderId,
-            //    ProductId = orderViewModel.ProductId,
-            //    Quantity = orderViewModel.Quantity,
-
-            //};
-
-            //// 使用Dapper执行插入操作，并获取订单编号
-            //int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
-            //  VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
-            //  SELECT SCOPE_IDENTITY();", newOrder);
-
-            //// 2. 将订单明细写入数据库
-            //foreach (var item in orderViewModel.OrderDetailIds)
-            //{
-            //    var orderDetail = new OrderDetail
-            //    {
-            //        OrderId = orderId,
-            //        ProductId = item.ProductId,
-            //        Quantity = item.Quantity
-            //    };
-
-            //    // 使用Dapper执行插入操作
-            //    _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
-            //                        VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
-            //}
-
-            //// 返回成功或其他适当的响应
-            //return Ok(new { OrderId = orderId }); // 返回订单编号或其他信息
+            
         }
     }
 }
 
 //======= 建立訂單 OrderId   Start =======
-//[HttpPost("create-order")]
-//public IActionResult CreateOrder1([FromBody] OrderViewModel orderViewModel)
-//{
-//    try
-//    {
-//        // 从JWT令牌中获取会员ID
-//        var memberIdClaim = User.Claims.FirstOrDefault(c => c.Type == "MemberId");
-
-//        if (memberIdClaim != null && int.TryParse(memberIdClaim.Value, out int memberId))
-//        {
-//            //// 从localStorage中获取购物车内容
-//            //var cartItems = GetCartItemsFromLocalStorage();
-
-
-
-//            if (!memberId = null)
-//            {
-//                // 创建订单并保存到数据库
-//                var newOrderDetail = new OrderDetail
-//                {
-//                    OrderDetailId = orderViewModel.OrderDetailId,
-//                    OrderId = orderViewModel.OrderId,
-//                    ProductId = orderViewModel.ProductId,
-//                    Quantity = orderViewModel.Quantity,
-
-//                };
-
-//                var newOrder = new Order
-//                {
-//                    OrderId = orderViewModel.OrderId,
-//                    MemberId = memberId,
-//                    TotalPrice = orderViewModel.TotalPrice,
-//                    OrderTime = DateTime.Now, // 您可以根据需要设置订单时间
-//                    PaymentMethod = orderViewModel.PaymentMethod,
-//                    ShippingMethod = orderViewModel.ShippingMethod,
-//                    PayTime = orderViewModel.PayTime
-//                };
-
-
-//                _context.Order.Add(newOrder);
-//                _context.SaveChanges();
-
-//                // 清空localStorage中的购物车内容
-//                ClearCartInLocalStorage();
-
-//                return Ok(new { OrderId = newOrder.OrderId });
-//            }
-
-
-//            else
-//            {
-//                return BadRequest("购物车为空，无法创建订单。");
-//            }
-//        }
-//        else
-//        {
-//            return Unauthorized("未授权的访问，用户未登录或身份验证失败。");
-//        }
-//    }
-//    catch (Exception ex)
-//    {
-//        return StatusCode(500, "Internal server error");
-//    }
-//}
-
-//// 从localStorage中获取购物车内容
-//private List<CartItem> GetCartItemsFromLocalStorage()
-//{
-
-//    // 从localStorage中获取购物车内容并将其转换为CartItem对象的列表
-//    // 根据您的localStorage数据结构编写适当的逻辑来解析购物车内容
-//    List<CartItem> cartItems = new List<CartItem>();
-
-//    // 例如，假设您的localStorage中的数据结构如下所示：
-//    // key: "cartItem1", value: "Product1|100|2"
-//    // key: "cartItem2", value: "Product2|50|1"
-
-//    // 您可以遍历localStorage中的所有键，将其解析为CartItem对象，并添加到列表中
-
-//    for (int i = 0; i < localStorage.length; i++)
-//    {
-//        string key = localStorage.key(i);
-//        string value = localStorage.getItem(key);
-
-//        // 解析购物车项的逻辑，将其添加到cartItems列表中
-//        // 例如，根据上述的假设数据结构，您可以使用Split方法进行解析
-//        string[] parts = value.Split('|');
-
-//        if (parts.Length == 3)
-//        {
-//            string productName = parts[0];
-//            decimal totalprice = decimal.Parse(parts[1]);
-//            int quantity = int.Parse(parts[2]);
-
-//            cartItems.Add(new CartItem { ProductName = productName, TotalPrice = totalprice, Quantity = quantity });
-//        }
-//    }
-
-//    return cartItems;
-//}
-
-//// 清空localStorage中的购物车内容
-//private void ClearCartInLocalStorage()
-//{
-//    // 根据您的localStorage数据结构编写适当的逻辑来清空购物车内容
-//    // 遍历localStorage中的所有键，并使用removeItem方法将其删除
-//    for (int i = 0; i < localStorage.length; i++)
-//    {
-//        string key = localStorage.key(i);
-//        localStorage.removeItem(key);
-//    }
-//}
-
-
-
-//======= 建立OrderId test  end =======
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //[HttpPost]
 //public async Task<IActionResult> Checkout([FromBody] List<OrderViewModel> orderItems)
