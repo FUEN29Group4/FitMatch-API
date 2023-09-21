@@ -5,7 +5,7 @@ using System.Security.Claims;
 namespace FitMatch_API.Models;
 public partial class Article
 {
-    public int ArticleId { get; set; }
+    public int ArticleID { get; set; }
 
     public string? Title { get; set; }
     public string? Link { get; set; }
