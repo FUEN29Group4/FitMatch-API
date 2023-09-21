@@ -261,6 +261,58 @@ namespace FitMatch_API.Controllers
             return Ok(new { OrderId = orderId });
             
         }
+        [HttpGet("orderviewmodel")]
+        public async Task<IActionResult> GetOrderViewModel(int id)
+        {
+            const string sql = @"
+        SELECT 
+            o.OrderId,
+            o.MemberId,
+            o.TotalPrice,
+            o.OrderTime,
+            o.PaymentMethod,
+            o.ShippingMethod,
+            o.PayTime,
+            o.Status,
+            odi.OrderDetailId,
+            odi.CartItems,
+            odi.ProductId,
+            odi.Quantity,
+            odi.ProductName,
+            odi.ProductDescription,
+            odi.Price,
+            odi.TypeId,
+            odi.ProductInventory,
+            odi.Approved,
+            odi.Photo,
+            t.TypeName,
+            m.MemberName,
+            m.Phone,
+            m.Address,
+            m.Email
+        FROM [Order] AS o
+        LEFT JOIN OrderDetail AS odi ON o.OrderId = odi.OrderId
+        LEFT JOIN ProductType AS t ON odi.TypeId = t.TypeId
+        LEFT JOIN Member AS m ON o.MemberId = m.MemberId
+        WHERE o.OrderId = @OrderId;";
+
+            var parameters = new { OrderId = id };
+
+            using (var connection = new SqlConnection("YourConnectionStringHere"))
+            {
+                connection.Open();
+                var multi = await connection.QueryMultipleAsync(sql, parameters, commandType: CommandType.Text);
+
+                var order = multi.Read<OrderViewModel>().FirstOrDefault();
+
+                if (order == null)
+                {
+                    return NotFound("No data found");
+                }
+
+                return Ok(order);
+            }
+        }
     }
 }
 
