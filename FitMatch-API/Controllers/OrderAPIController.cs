@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 //Debug類要加的命名空間
 using System.Diagnostics;
 using static FitMatch_API.Models.MemberFavorite;
+using Microsoft.Extensions.Configuration;
+using System.Xml.Linq;
 
 
 
@@ -42,7 +44,7 @@ namespace FitMatch_API.Controllers
 
 
 
-        // R: 讀取所有Order列表資料 => ok
+        // 彤: 讀取所有Order列表資料 => ok
         [HttpGet]
         public async Task<IActionResult> GetALLOrder()
         {
@@ -60,7 +62,7 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        // R: # 讀取特定的Order資料 => ok
+        // 彤: 讀取特定的Order資料 => ok
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder(int id)
         {
@@ -70,24 +72,6 @@ namespace FitMatch_API.Controllers
             using (var multi = await _context.QueryMultipleAsync(sql, parameters))
             {
                 var order = multi.Read<Order>().FirstOrDefault();
-
-                // # 將訂單資訊填充到ViewData中，以便在視圖中使用
-                //ViewData["MerchantID"] = order.MerchantID;
-                //ViewData["MerchantOrderNo"] = order.MerchantOrderNo;
-                //ViewData["ItemDesc"] = order.ItemDesc;
-                //ViewData["Amt"] = order.Amt;
-                //ViewData["ExpireDate"] = order.ExpireDate;
-                //ViewData["ClientBackURL"] = order.ClientBackURL;
-                //ViewData["Email"] = order.Email;
-
-                //ViewData["MemberId"] = order.MemberId;
-                //ViewData["MemberName"] = order.MemberName;
-                ////ViewData["Phone"] = order.Phone;
-                ////ViewData["Email"] = order.Email;
-
-                //ViewData["OrderId"] = order.OrderId;
-                //ViewData["Atm"] = order.TotalPrice;
-                //ViewData["OrderTime"] = order.OrderTime;
 
                 // 基本驗證，確保資料存在
                 if (order == null)
@@ -99,6 +83,132 @@ namespace FitMatch_API.Controllers
                 return Ok(order);
             }
         }
+
+
+        // 彤: # 讀取特定的OrderViewModel資料 => 
+        //[HttpGet("orderviewmodel")]
+        //public async Task<IActionResult> GetOrderViewModel(int id)
+        //{
+        //    const string sql = @"SELECT * FROM [Order] WHERE OrderId = @OrderId";
+        //    var parameters = new { OrderId = id };
+
+        //    using (var multi = await _context.QueryMultipleAsync(sql, parameters))
+        //    {
+        //        var order = multi.Read<OrderViewModel>().FirstOrDefault();
+
+        //        // 基本驗證，確保資料存在
+        //        if (order == null)
+        //        {
+        //            return NotFound("No data found");
+        //        }
+
+        //        // #return Ok(order);
+        //        return Ok(order);
+        //    }
+        //}
+
+
+        //##讀取特定的OrderViewModel資料：Dapper 測試中～～～～～
+        [HttpGet("orderviewmodel")]
+        public async Task<IActionResult> GetOrderViewModel(int id)
+        {
+            const string sql = @"
+            SELECT 
+                o.OrderId,
+                o.MemberId,
+                o.TotalPrice,
+                o.OrderTime,
+                
+                odi.Quantity,
+               
+                m.MemberName,
+                m.Phone,
+                m.Address,
+                m.Email
+
+            FROM [Order] AS o
+            LEFT JOIN OrderDetail AS odi ON o.OrderId = odi.OrderId
+            
+            LEFT JOIN Member AS m ON o.MemberId = m.MemberId
+            WHERE o.OrderId = @OrderId;";
+
+            var parameters = new { OrderId = id };
+           
+
+
+            using (var multi = await _context.QueryMultipleAsync(sql, parameters))
+            {
+
+                
+                var order = multi.Read<OrderViewModel>().FirstOrDefault();
+
+                if (order == null)
+                {
+                    return NotFound("No data found");
+                }
+
+                return Ok(order);
+            }
+        }
+
+
+
+
+
+        //彤： 建立訂單  => ok 
+        [HttpPost]
+        public IActionResult CreateOrder([FromBody] OrderViewModel orderViewModel)
+        {
+            // 在这里处理接收到的订单信息
+            // orderViewModel 包含了订单相关的数据，例如MemberId、TotalPrice、PaymentMethod、ShippingMethod等
+            // 驗證數據
+            if (orderViewModel == null || !ModelState.IsValid)
+            {
+                return BadRequest("Invalid data.");
+            }
+            // 1. 创建新订单
+            var newOrder = new Order
+            {
+                MemberId = orderViewModel.MemberId,
+                TotalPrice = orderViewModel.TotalPrice,
+                OrderTime = DateTime.Now, // 您可以根据需要设置订单时间
+                PaymentMethod = orderViewModel.PaymentMethod,
+                ShippingMethod = orderViewModel.ShippingMethod
+            };
+            // 使用Dapper執行插入操作，並獲取訂單編號
+            int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
+        VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
+        SELECT SCOPE_IDENTITY();", newOrder);
+
+            // 2. 將訂單明細寫入數據庫
+            foreach (var item in orderViewModel.CartItems) // 注意這裡使用CartItems而不是OrderDetailIds
+            {
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = orderId,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity // 購物車中的數量
+                };
+
+                // 使用Dapper執行插入操作
+                _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
+                            VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
+            }
+
+            // 返回成功或其他適當的響應
+            return Ok(new { OrderId = orderId });
+
+        }
+
+
+
+
+
+
+
+
+
+        //＝＝＝＝＝＝＝＝ 以上給欣彤 ＝＝＝＝＝ 以下給承蔚 ＝＝＝＝＝＝＝＝＝
 
 
         //查會員訂單
@@ -216,116 +326,10 @@ namespace FitMatch_API.Controllers
 
 
 
-        //======= 建立訂單 test  =======
-        [HttpPost]
-        public IActionResult CreateOrder([FromBody] OrderViewModel orderViewModel)
-        {
-            // 在这里处理接收到的订单信息
-            // orderViewModel 包含了订单相关的数据，例如MemberId、TotalPrice、PaymentMethod、ShippingMethod等
-            // 驗證數據
-            if (orderViewModel == null || !ModelState.IsValid)
-            {
-                return BadRequest("Invalid data.");
-            }
-            // 1. 创建新订单
-            var newOrder = new Order
-            {
-                MemberId = orderViewModel.MemberId,
-                TotalPrice = orderViewModel.TotalPrice,
-                OrderTime = DateTime.Now, // 您可以根据需要设置订单时间
-                PaymentMethod = orderViewModel.PaymentMethod,
-                ShippingMethod = orderViewModel.ShippingMethod
-            };
-            // 使用Dapper執行插入操作，並獲取訂單編號
-            int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
-        VALUES (@MemberId, @TotalPrice, @OrderTime, @PaymentMethod, @ShippingMethod);
-        SELECT SCOPE_IDENTITY();", newOrder);
-
-            // 2. 將訂單明細寫入數據庫
-            foreach (var item in orderViewModel.CartItems) // 注意這裡使用CartItems而不是OrderDetailIds
-            {
-                var orderDetail = new OrderDetail
-                {
-                    OrderId = orderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity // 購物車中的數量
-                };
-
-                // 使用Dapper執行插入操作
-                _context.Execute(@"INSERT INTO OrderDetail (OrderId, ProductId, Quantity)
-                            VALUES (@OrderId, @ProductId, @Quantity)", orderDetail);
-            }
-
-            // 返回成功或其他適當的響應
-            return Ok(new { OrderId = orderId });
-            
-        }
+     
     }
 }
 
-//======= 建立訂單 OrderId   Start =======
-
-//[HttpPost]
-//public async Task<IActionResult> Checkout([FromBody] List<OrderViewModel> orderItems)
-//{
-//    try
-//    {
-//        创建一个新订单
-//       var newOrder = new OrderViewModel
-//       {
-//           MemberId = orderItems[0].MemberId,
-//           OrderId = orderItems.Count,
-//           OrderDetailId = orderItems.Count,
-//           ProductId = orderItems.Count,
-//           OrderTime = DateTime.Now,
-//           Quantity = orderItems.Count,
-//           ProductName = string.Join(", ", orderItems.Select(item => item.ProductName)), // 將商品名稱串聯為字串
-//           Price = orderItems.Count,
-//           TotalPrice = orderItems.Sum(item => item.Price * item.Quantity) // 計算總價
-
-
-//            其他订单属性的赋值
-//       };
-
-//        // 将订单项添加到新订单中
-//        foreach (var orderItem in orderItems)
-//        {
-//            var product = await _context.Products.FindAsync(orderItem.ProductId);
-
-//            if (product != null)
-//            {
-//                // 创建订单详情
-//                var orderDetail = new OrderDetail
-//                {
-//                    ProductId = product.Id, // 假设你有一个 Id 属性来表示产品的唯一标识
-//                    Quantity = orderItem.Quantity,
-//                    OrderId = newOrder.OrderId,
-//                    OrderDetailId = newOrder.OrderDetailId
-
-
-//                    // 其他订单详情属性的赋值
-//                };
-
-//                // 将订单详情添加到新订单中
-//                newOrder.OrderDetailId.Add(orderDetail);
-
-//                _context.Carts.Add(cart);
-//                _context.SaveChanges();
-//            }
-//        }
-
-//        // 保存订单到数据库
-//        _context.Orders.Add(newOrder);
-//        await _context.SaveChangesAsync();
-
-//        return Ok(new { message = "订单已成功创建" });
-//    }
-
-//    catch (Exception ex)
-//    {
-//        return BadRequest(new { message = "创建订单时出错：" + ex.Message });
-//    }
-//}
 
 
 
@@ -349,42 +353,7 @@ namespace FitMatch_API.Controllers
 
 
 
-////讀取購物車所有資料
-//[HttpGet("/api/OrderAPI/GetCart")]
-//public async Task<ActionResult<CartViewModel>> GetCart()
-//{
-//    try
-//    {
-//        var memberId = HttpContext.Session.GetInt32("MemberId");
-//        var cart = await Read<Cart>().ToList();
 
-//        if (cart == null)
-//        {
-//            return NotFound("找不到此購物車");
-//        }
-
-//        var cartItemViewModels = cart.CartItems.Select(item => new CartItemViewModel
-//        {
-//            ProductId = (int)item.ProductId,
-//            ProductName = item.Product?.ProductName,
-//            UnitPrice = item.Product.UnitPrice,
-//            Quantity = (int)item.Quantity
-//        }).ToList();
-
-//        var cartViewModel = new CartViewModel
-//        {
-//            CartId = cart.CartId,
-//            Items = cartItemViewModels
-//        };
-
-//        return Ok(cartViewModel);
-//    }
-//    catch (Exception ex)
-//    {
-//        _logger.LogError(ex, "取得購物車時發生錯誤。");
-//        return StatusCode(500, "內部伺服器錯誤");
-//    }
-//}
 
 
 
