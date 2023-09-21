@@ -12,10 +12,6 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 
-
-
-
-
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace FitMatch_API.Controllers
@@ -24,6 +20,47 @@ namespace FitMatch_API.Controllers
     [ApiController]
     public class ArticleController : ControllerBase
     {
+        private readonly IDbConnection _db;
+
+        public ArticleController(IConfiguration configuration)
+        {
+            _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        }
+
+        [HttpGet("announcement")]
+        public async Task<IActionResult> Getannouncement()
+        {
+            const string sql = @"SELECT * FROM Article WHERE ArticleTypeName = 'announcement'";
+
+            using (var multi = await _db.QueryMultipleAsync(sql))
+            {
+                var announcement = multi.Read<Article>().ToList();
+                // 基本驗證，確保資料存在
+                if (announcement == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(announcement);
+            }
+        }
+        // GET api/<announcementController>/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Getannouncement(int id)
+        {
+            const string sql = @"SELECT * FROM Article WHERE ArticleID = @ArticleID";
+            var parameters = new { ArticleID = id };
+
+            using (var multi = await _db.QueryMultipleAsync(sql, parameters))
+            {
+                var announcement = multi.Read<Article>().FirstOrDefault();
+                // 基本驗證，確保資料存在
+                if (announcement == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(announcement);
+            }
+        }
 
         [HttpGet("sport")]
         public async Task<IActionResult> Getsport()
@@ -135,10 +172,10 @@ namespace FitMatch_API.Controllers
         {
             public string status { get; set; }
             public int totalResults { get; set; }
-            public List<Article> articles { get; set; }
+            public List<ArticleNews> articles { get; set; }
         }
 
-        public class Article
+        public class ArticleNews
         {
             public string title { get; set; }
             public string description { get; set; }

@@ -273,7 +273,7 @@ namespace FitMatch_API.Controllers
 
         //查會員訂單明細
         [HttpGet("OrderDetail")]
-        public async Task<IActionResult> GetMemberOrderDetail(int id)
+        public async Task<IActionResult> GetMemberOrderDetail(int oid)
         {
             //查訂單明細
             const string sqlOrderDetail = @"
@@ -286,7 +286,8 @@ namespace FitMatch_API.Controllers
 
                   p.ProductId,
                   p.Productname,
-                  p.Price
+                  p.Price,
+                  p.Photo
 
                    FROM OrderDetail AS od
 
@@ -294,7 +295,7 @@ namespace FitMatch_API.Controllers
 
                  WHERE od.OrderID = @OrderID;
                 ";
-            var parameters = new { OrderID = id };
+            var parameters = new { OrderID = oid };
 
             //查訂單明細
             var MemberOrderDetail = await _context.QueryAsync<Order, Product, Order>(
