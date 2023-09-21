@@ -318,11 +318,11 @@ namespace FitMatch_API.Controllers
 
                     if (affectedRows > 0)
                     {
-                        return Ok($"{userType} 密碼重置成功");
+                        return Ok(new { success = true, message = $"{userType} 密碼重置成功" });
                     }
                     else
                     {
-                        return BadRequest($"{userType} 密碼重置失敗");
+                        return BadRequest(new { success = false, message = $"{userType} 密碼重置失敗" });
                     }
                 }
             }
