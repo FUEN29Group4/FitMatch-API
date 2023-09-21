@@ -12,6 +12,7 @@ public partial class Order
 
     public decimal? TotalPrice { get; set; }//訂單總價
 
+
     public DateTime? OrderTime { get; set; }//訂單時間
 
     public string? PaymentMethod { get; set; }//支付方式
@@ -32,9 +33,11 @@ public partial class Order
     public int? Price { get; set; }//價格
 
 
-    public List<Member> Members { get; set; }
- = new List<Member>();
-
-
+    public List<Member> Members { get; set; }= new List<Member>();
     public List<Product> Products { get; set; } = new List<Product>();
+
+
+    public bool? Status { get; set; }//狀態
+
+   
 }

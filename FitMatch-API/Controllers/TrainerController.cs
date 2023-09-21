@@ -34,6 +34,8 @@ namespace FitMatch_API.Controllers
 
             return Ok(trainer);
         }
+
+
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
