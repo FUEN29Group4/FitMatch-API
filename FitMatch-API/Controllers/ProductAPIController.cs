@@ -32,7 +32,7 @@ namespace FitMatch_API.Controllers
 
 
 
-        //讀取全部商品 => 給商城頁面使用
+        //讀取全部商品 => 給商城頁面使用 ok
         [HttpGet]
         public async Task<IActionResult> Products()
         {
@@ -52,11 +52,13 @@ namespace FitMatch_API.Controllers
 
 
 
-        //讀取特定商品 => 給商品詳細頁面使用
+        //讀取特定商品 => 給商品詳細頁面使用 ok
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProduct(int id)
         {
             const string sql = @"SELECT * FROM Product WHERE ProductId = @ProductId";
+
+            
 
             using (var multi = await _context.QueryMultipleAsync(sql, new { ProductId = id }))
             {
