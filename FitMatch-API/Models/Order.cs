@@ -10,6 +10,9 @@ public partial class Order
 
     public int? MemberId { get; set; }//會員編號
 
+    public int Quantity { get; set; }
+
+
     public decimal? TotalPrice { get; set; }//訂單總價
 
 
