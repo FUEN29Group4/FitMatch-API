@@ -4,6 +4,8 @@
     {
         // Class 屬性
         public int ClassId { get; set; }
+        public int VenueReservationId {get; set; }
+        public DateTime? VenueReservationDate {get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? BuildTime { get; set; }
         public DateTime? EndTime { get; set; }
@@ -23,5 +25,11 @@
         public string GymName { get; set; }
         public string MemberName { get; set; }
         public int CourseUnitPrice { get; set;}
+        public DateTimeOffset StartTimeOffset { get; set; }
+        public DateTimeOffset BuildTimeOffset { get; set; }
+        public DateTimeOffset EndTimeOffset { get; set; }
+        public DateTimeOffset OpentimeStartOffset { get; set; }
+        public DateTimeOffset OpentimeEndOffset { get; set; }
+        public DateTimeOffset VenueReservationDateOffset { get; set; }
     }
 }
