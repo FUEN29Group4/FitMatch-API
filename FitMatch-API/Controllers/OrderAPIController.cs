@@ -303,18 +303,19 @@ namespace FitMatch_API.Controllers
 
             //查訂單明細
             var MemberOrderDetail = await _context.QueryAsync<Order, Product, Order>(
-               sqlOrderDetail,
-               (orderdetail, product) =>
-               {
-                   if (product != null && product.ProductId != null)
-                   {
-                       orderdetail.Products.Add(product);
-                   }
-                   return orderdetail;
-               },
-               param: parameters,
-               splitOn: "OrdetailId"
-           );
+     sqlOrderDetail,
+     (orderdetail, product) =>
+     {
+         if (product != null && product.ProductId != null)
+         {
+             orderdetail.Products.Add(product);
+         }
+         return orderdetail;
+     },
+     param: parameters,
+     splitOn: "OrdetailId"
+ );
+
 
             if ((MemberOrderDetail == null || !MemberOrderDetail.Any()))
             {
