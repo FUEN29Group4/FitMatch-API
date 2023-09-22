@@ -96,7 +96,7 @@ namespace FitMatch_API.Controllers
             int rowsAffected = await _db.ExecuteAsync(sql,
                 new
                 {
-                    
+
                     TrainerId = id,
                     Phone = trainerData.Phone,
                     TrainerName = trainerData.TrainerName,
@@ -136,12 +136,20 @@ namespace FitMatch_API.Controllers
 
                 if (rowsAffected > 0)
                 {
-                    return Ok("收藏成功");
+                    return Ok(new
+                    {
+                        status = "success",
+                        message = "收藏成功"
+                    });
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"錯誤訊息: {ex}");
+                return StatusCode(500, new
+                {
+                    status = "error",
+                    message = $"内部服务器错误: {ex.Message}"
+                });
             }
 
             return BadRequest("無法加入收藏");
@@ -151,6 +159,56 @@ namespace FitMatch_API.Controllers
         {
             public int MemberId { get; set; }
             public int TrainerId { get; set; }
+        }
+        [HttpGet("GetFavoriteTrainer/{id}")]
+        public async Task<IActionResult> GetFavoriteTrainer(int id)
+        {//查詢收藏
+            try
+            {
+                // Your SQL query to retrieve all records for the given MemberId
+                string sqlQuery = "SELECT * FROM MemberFavorite WHERE MemberId = @MemberId AND (TrainerId IS NOT NULL OR ProductId IS NOT NULL)";
+
+                // Execute the query using Dapper
+                var favoriteRecords = await _db.QueryAsync<SimpleMemberFavorite>(sqlQuery, new { MemberId = id });
+
+                if (favoriteRecords != null && favoriteRecords.Any())
+                {
+                    var response = new
+                    {
+                        status = "success",
+                        message = "收藏查詢成功",
+                        data = favoriteRecords 
+                    };
+
+                    return Ok(favoriteRecords);
+                }
+                else
+                {
+                    var response = new
+                    {
+                        status = "error",
+                        message = "找不到具有TrainerId或ProductId的紀錄"
+                    };
+                    return NotFound(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                var response = new
+                {
+                    status = "error",
+                    message = $"內部服務器錯誤: {ex.Message}"
+                };
+                return StatusCode(500, response);
+            }
+        }
+        //自訂模型 因為原本模型太多東西了
+        public class SimpleMemberFavorite
+        {
+            public int MemberFavoriteId { get; set; }
+            public int? MemberId { get; set; }
+            public int? TrainerId { get; set; }
+            public int? ProductId { get; set; }
         }
 
     }
