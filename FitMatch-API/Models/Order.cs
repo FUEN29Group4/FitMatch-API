@@ -10,6 +10,9 @@ public partial class Order
 
     public int? MemberId { get; set; }//會員編號
 
+    public int Quantity { get; set; }
+
+
     public decimal? TotalPrice { get; set; }//訂單總價
 
 
@@ -35,7 +38,7 @@ public partial class Order
 
     public List<Member> Members { get; set; }= new List<Member>();
     public List<Product> Products { get; set; } = new List<Product>();
-
+    public List<OrderDetail> Orders { get; set; } = new List<OrderDetail>();
 
     public bool? Status { get; set; }//狀態
 

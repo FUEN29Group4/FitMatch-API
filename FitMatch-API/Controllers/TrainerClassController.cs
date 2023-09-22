@@ -29,14 +29,16 @@ namespace FitMatch_API.Controllers
         public async Task<IActionResult> GetAllTrainerClass(int id)
         {
             const string sql = @"SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
-       b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
-       c.MemberID, c.MemberName, 
-       e.TrainerName, e.TrainerID
+        b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,a.VenueReservationID,v.VenueReservationDate,
+        c.MemberID, c.MemberName, 
+        e.TrainerName, e.TrainerID
         FROM Class AS a
         INNER JOIN Gyms AS b ON a.GymID = b.GymID
         LEFT JOIN Member AS c ON a.MemberID = c.MemberID
         INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
-                    WHERE a.TrainerID = @TrainerId ;";
+        INNER JOIN VenueReservation AS v ON a.VenueReservationID = v.VenueReservationID
+        WHERE a.TrainerID = @TrainerId ;";
+
             var parameters = new { TrainerId = id };
 
             using (var multi = await _db.QueryMultipleAsync(sql, parameters))
@@ -46,6 +48,48 @@ namespace FitMatch_API.Controllers
                 {
                     return NotFound("No data found");
                 }
+
+                TimeZoneInfo taipeiZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+
+                foreach (var trainerClass in TrainerClass)
+                {
+                    if (trainerClass.StartTime.HasValue)
+                    {
+                        var startTimeOffset = new DateTimeOffset(trainerClass.StartTime.Value, taipeiZone.GetUtcOffset(trainerClass.StartTime.Value));
+                        trainerClass.StartTimeOffset = startTimeOffset;
+                    }
+
+                    if (trainerClass.BuildTime.HasValue)
+                    {
+                        var buildTimeOffset = new DateTimeOffset(trainerClass.BuildTime.Value, taipeiZone.GetUtcOffset(trainerClass.BuildTime.Value));
+                        trainerClass.BuildTimeOffset = buildTimeOffset;
+                    }
+
+                    if (trainerClass.EndTime.HasValue)
+                    {
+                        var endTimeOffset = new DateTimeOffset(trainerClass.EndTime.Value, taipeiZone.GetUtcOffset(trainerClass.EndTime.Value));
+                        trainerClass.EndTimeOffset = endTimeOffset;
+                    }
+
+                    if (trainerClass.OpentimeStart.HasValue)
+                    {
+                        var opentimeStartOffset = new DateTimeOffset(trainerClass.OpentimeStart.Value, taipeiZone.GetUtcOffset(trainerClass.OpentimeStart.Value));
+                        trainerClass.OpentimeStartOffset = opentimeStartOffset;
+                    }
+
+                    if (trainerClass.OpentimeEnd.HasValue)
+                    {
+                        var opentimeEndOffset = new DateTimeOffset(trainerClass.OpentimeEnd.Value, taipeiZone.GetUtcOffset(trainerClass.OpentimeEnd.Value));
+                        trainerClass.OpentimeEndOffset = opentimeEndOffset;
+                    }
+
+                    if (trainerClass.VenueReservationDate.HasValue)
+                    {
+                        var venueReservationDateOffset = new DateTimeOffset(trainerClass.VenueReservationDate.Value, taipeiZone.GetUtcOffset(trainerClass.VenueReservationDate.Value));
+                        trainerClass.VenueReservationDateOffset = venueReservationDateOffset;
+                    }
+                }
+
                 return Ok(TrainerClass);
             }
         }

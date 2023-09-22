@@ -128,7 +128,7 @@ namespace FitMatch_API.Controllers
                     Email = MemberData.Email,
                     Password = MemberData.Password,
                     Photo = MemberData.Photo,
-                   
+
                 });
 
             if (rowsAffected == 0)

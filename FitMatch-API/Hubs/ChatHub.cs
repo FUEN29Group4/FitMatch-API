@@ -28,13 +28,14 @@ namespace FitMatch_API.Hubs
             await Clients.Client(Context.ConnectionId).SendAsync("Initialized", true);
         }
 
+        
 
         //public override async task onconnectedasync()
         //{
-        //    var httpcontext = context.gethttpcontext();
+        //    //var httpcontext = Context.gethttpcontext();
         //    var sessionid = httpcontext.request.headers["session-id"].tostring();
         //    // 保存 connectionid 和 sessionid 的关联
-        //    connectionmapping[sessionid] = context.connectionid;
+        //    ConnectionMapping[sessionid] = Context.ConnectionId;
 
         //    await base.onconnectedasync();
         //}
@@ -61,9 +62,18 @@ VALUES (@SenderId, @ReceiverId, @MessageContent, @DateTime,@Role)";
 
                 // Send the message if receiver's ConnectionId exists
                 // 发送消息给接收者
-                if (ConnectionMapping.TryGetValue(receiverId.ToString(), out string receiverConnectionId))
+                //if (ConnectionMapping.TryGetValue(Context.ConnectionId, out string receiverConnectionId))
+                //{
+                //    Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderId, message, role);
+                //}
+                //else
+                //{
+                //    _logger.LogWarning($"No client associated with receiverId: {receiverId}");
+                //}
+                string ConnectonId = ConnectionMapping.First().Value != Context.ConnectionId ?ConnectionMapping.First().Value : ConnectionMapping.Last().Value;
+                if (ConnectionMapping.Count!=0)
                 {
-                    Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderId, message, role);
+                    Clients.Client(ConnectonId).SendAsync("ReceiveMessage", senderId, message, role);
                 }
                 else
                 {
@@ -79,7 +89,7 @@ VALUES (@SenderId, @ReceiverId, @MessageContent, @DateTime,@Role)";
         public override async Task OnConnectedAsync()
         {
             var senderId = Context.GetHttpContext().Request.Headers["senderId"].ToString();
-            ConnectionMapping[senderId] = Context.ConnectionId;
+            ConnectionMapping[Context.ConnectionId] = Context.ConnectionId;
             await base.OnConnectedAsync();
         }
 
