@@ -46,12 +46,11 @@ namespace FitMatch_API.Controllers
             return tokenHandler.WriteToken(token);
         }
 
-       
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel loginModel)
         {
-
             var recaptchaResponse = this.Request.Headers["Recaptcha-Response"];
             if (string.IsNullOrEmpty(recaptchaResponse))
             {
@@ -61,11 +60,20 @@ namespace FitMatch_API.Controllers
             // 驗證 reCAPTCHA
             using (HttpClient httpClient = new HttpClient())
             {
-                var response = await httpClient.GetStringAsync($"https://www.google.com/recaptcha/api/siteverify?secret=6LesMDMoAAAAAI8-lx4Tre6hEdvN9lZAUVWoAv2k&response={recaptchaResponse}");
+                var response = await httpClient.GetStringAsync($"https://www.google.com/recaptcha/api/siteverify?secret=6LdtAkYoAAAAADfRYGdV43K0yvESHMoV2e8A485_&response={recaptchaResponse}");
                 var reCaptchaResult = JsonConvert.DeserializeObject<dynamic>(response);
+
+                // 檢查驗證是否成功
                 if (!(bool)reCaptchaResult.success)
                 {
                     return BadRequest("reCAPTCHA 驗證失敗.");
+                }
+
+                // 檢查分數是否低於閾值
+                double score = (double)reCaptchaResult.score;
+                if (score < 0.5) // 你可以根據你的需要調整這個閾值
+                {
+                    return BadRequest("reCAPTCHA 驗證失敗: 懷疑你是機器人。");
                 }
             }
 
