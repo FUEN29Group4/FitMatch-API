@@ -6,6 +6,7 @@ using FitMatch_API.Models;
 using System.Linq;
 using System.Security.Claims;
 using FitMatch_API.DTO;
+using System.Reflection;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -134,6 +135,120 @@ namespace FitMatch_API.Controllers
             }
         }
 
+
+        [HttpPost("VenueReservation")]
+        public async Task<IActionResult> CreateOrUpdateVenueReservation(VenueReservation model)
+        {
+            if (model == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            const string checkExistenceSql = @"SELECT * FROM VenueReservation WHERE TrainerId = @TrainerId AND VenueReservationDate = @VenueReservationDate";
+            var existingReservation = (await _db.QueryAsync<VenueReservation>(checkExistenceSql, new { model.TrainerId, model.VenueReservationDate })).FirstOrDefault();
+
+            if (existingReservation != null)
+            {
+                // 如果存在，更新場館信息
+                const string updateSql = @"UPDATE VenueReservation SET GymId = @GymId WHERE VenueReservationID = @VenueReservationID";
+                await _db.ExecuteAsync(updateSql, new { model.GymId, existingReservation.VenueReservationID });
+                return Ok(new { Message = "Reservation updated." });
+            }
+            else
+            {
+                // 如果不存在，創建新的預定
+                const string insertSql = @"INSERT INTO VenueReservation (TrainerID, GymId, VenueReservationDate) VALUES (@TrainerId, @GymId, @VenueReservationDate)";
+                await _db.ExecuteAsync(insertSql, model);
+                return Ok(new { Message = "New reservation created." });
+            }
+
+        }
+        [HttpGet("VenueReservation/{id}")]
+        public async Task<IActionResult> GetAllVenueReservation(int id)
+        {
+                const string sql = @"SELECT 
+                v.GymID,
+                v.TrainerID,
+                v.VenueReservationDate,
+                v.VenueReservationID,
+                g.GymName,
+                t.TrainerName
+                ,g.Address
+
+                FROM VenueReservation v
+                INNER JOIN Gyms g ON v.GymID = g.GymID
+                INNER JOIN Trainers t ON v.TrainerID = t.TrainerID
+                WHERE v.TrainerID = @TrainerId ;";
+            var parameters = new { TrainerId = id };
+
+            var VenueReservations = await _db.QueryAsync<VenueReservationDTO>(sql, parameters);
+            // 基本驗證，確保資料存在
+            if (VenueReservations == null || !VenueReservations.Any())
+            {
+                return NotFound("No data found");
+            }
+            return Ok(VenueReservations.ToList());
+        }
+
+        [HttpDelete("VenueReservation/{venueReservationId}")]
+        public async Task<IActionResult> DeleteVenueReservation(int venueReservationId)
+        {
+            if (venueReservationId <= 0)
+            {
+                return BadRequest("Invalid id.");
+            }
+
+            const string checkExistenceSql = @"SELECT * FROM VenueReservation WHERE VenueReservationID = @VenueReservationID";
+            var existingReservation = (await _db.QueryAsync<VenueReservation>(checkExistenceSql, new { VenueReservationID = venueReservationId })).FirstOrDefault();
+
+            if (existingReservation != null)
+            {
+                const string deleteSql = @"DELETE FROM VenueReservation WHERE VenueReservationID = @VenueReservationID";
+                await _db.ExecuteAsync(deleteSql, new { VenueReservationID = existingReservation.VenueReservationID });
+                return Ok(new { Message = "Reservation deleted." });
+            }
+            else
+            {
+                return NotFound("Reservation not found.");
+            }
+        }
+        [HttpPost("Class")]
+        public async Task<IActionResult> InsertClass(Class model)
+        {
+            if (model == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            // 查找在特定時間段是否存在課程
+            const string checkExistenceSql = @"
+        SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
+               b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
+               c.MemberID, c.MemberName, 
+               e.TrainerName, e.TrainerID
+        FROM Class AS a
+        INNER JOIN Gyms AS b ON a.GymID = b.GymID
+        INNER JOIN Member AS c ON a.MemberID = c.MemberID
+        INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
+        WHERE a.TrainerID = @TrainerId AND a.StartTime >= @StartTime AND a.EndTime <= @EndTime";
+            var existingClass = (await _db.QueryAsync<Class>(checkExistenceSql,
+                            new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime }))
+                            .FirstOrDefault();
+
+            if (existingClass != null)
+            {
+                // 如果存在重複的課程，返回一個錯誤消息
+                return BadRequest("A class with the same TrainerId and time slot already exists.");
+            }
+
+            // 插入新的課程
+            const string insertSql = @"INSERT INTO Class (TrainerId, StartTime, EndTime,gymId,) 
+                               VALUES (@TrainerId, @StartTime, @EndTime, @OtherValues)";
+            await _db.ExecuteAsync(insertSql,
+                     new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime,  });
+
+            return Ok(new { Message = "New class created." });
+        }
 
 
 
