@@ -39,7 +39,7 @@ builder.Services.AddCors(options =>
     //options.AddPolicy("AllowMyOrigin",
     //    builder => builder.AllowAnyOrigin()
     options.AddPolicy("CorsPolicy",
-          builder => builder.WithOrigins("https://localhost:7088")  // 替換為你的前端網站地址
+          builder => builder.WithOrigins("https://fitmatchclient4.azurewebsites.net")  // 替換為你的前端網站地址
 
           .AllowAnyMethod()
             .AllowAnyHeader()
