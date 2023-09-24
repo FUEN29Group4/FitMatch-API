@@ -88,23 +88,29 @@ namespace FitMatch_API.Controllers
             string profilePictureUrl = profileData.pictureUrl;
 
             // 檢查LineUsers資料表中是否已存在此userId
-            var sqlCheckUserExists = @"SELECT COUNT(*) FROM LineUsers WHERE LineUserId = @LineUserId";
-            int userCount = await _db.ExecuteScalarAsync<int>(sqlCheckUserExists, new { LineUserId = lineUserId });
+            var sqlCheckUserExists = @"SELECT Id FROM LineUsers WHERE LineUserId = @LineUserId";
+            int? existingUserId = await _db.ExecuteScalarAsync<int?>(sqlCheckUserExists, new { LineUserId = lineUserId });
 
-            if (userCount == 0)
+            if (!existingUserId.HasValue)
             {
                 // 用戶不存在，新增一條記錄
-                var sqlInsertUser = @"INSERT INTO LineUsers (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl)";
-                await _db.ExecuteAsync(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
+                var sqlInsertUser = @"INSERT INTO LineUsers (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl);
+                          SELECT CAST(SCOPE_IDENTITY() as int)"; // 获取新插入的ID
+                int newId = await _db.ExecuteScalarAsync<int>(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
+
+                var token = GenerateJwtToken(newId, "LineUser");
+                return Redirect($"https://localhost:7088/?token={token}");
             }
             else
             {
                 // 用戶已存在，可以根據需求更新登入日期或其他資訊
                 var sqlUpdateLoginDate = @"UPDATE LineUsers SET LoginDate = GETDATE() WHERE LineUserId = @LineUserId";
                 await _db.ExecuteAsync(sqlUpdateLoginDate, new { LineUserId = lineUserId });
+
+                var token = GenerateJwtToken(existingUserId.Value, "LineUser"); // 使用已存在的ID生成令牌
+                return Redirect($"https://localhost:7088/?token={token}");
             }
 
-            return Redirect("https://localhost:7088/");  
         }
 
 
@@ -239,9 +245,22 @@ namespace FitMatch_API.Controllers
                 ValidateAudience = false
             };
 
+
+
             var claims = handler.ValidateToken(token, validations, out var tokenSecure);
             var userId = int.Parse(claims.FindFirst("Id").Value);
             var userType = claims.FindFirst("Type").Value;
+
+            // 首先查詢 LineUsers 表以獲取 LINE 用戶資訊
+            var lineUserSql = @"SELECT DisplayName, ProfilePictureUrl FROM LineUsers WHERE Id = @Id";
+            var lineUserParameters = new { Id = userId };
+            var lineUser = await _db.QuerySingleOrDefaultAsync<dynamic>(lineUserSql, lineUserParameters);
+
+            if (lineUser != null)
+            {
+                // 如果在 LineUsers 表中找到相應的資料，直接返回
+                return Ok(lineUser);
+            }
 
             // 根據 userType 和 userId 從數據庫中獲取用戶詳細信息
             if (userType == "Member")
@@ -258,7 +277,6 @@ namespace FitMatch_API.Controllers
                 var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(sql, parameters);
                 return Ok(trainer);
             }
-
 
             return BadRequest("Invalid user type");
         }
