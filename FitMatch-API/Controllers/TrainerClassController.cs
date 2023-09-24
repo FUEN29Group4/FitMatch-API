@@ -32,7 +32,7 @@ namespace FitMatch_API.Controllers
             const string sql = @"SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
         b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,a.VenueReservationID,v.VenueReservationDate,
         c.MemberID, c.MemberName, 
-        e.TrainerName, e.TrainerID
+        e.TrainerName, e.TrainerID,e.CourseFee
         FROM Class AS a
         INNER JOIN Gyms AS b ON a.GymID = b.GymID
         LEFT JOIN Member AS c ON a.MemberID = c.MemberID
@@ -116,7 +116,7 @@ namespace FitMatch_API.Controllers
             const string sql = @"SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
        b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
        c.MemberID, c.MemberName, 
-       e.TrainerName, e.TrainerID
+       e.TrainerName, e.TrainerID,e.CourseFee
         FROM Class AS a
         INNER JOIN Gyms AS b ON a.GymID = b.GymID
         INNER JOIN Member AS c ON a.MemberID = c.MemberID
@@ -220,35 +220,71 @@ namespace FitMatch_API.Controllers
                 return BadRequest("Invalid data.");
             }
 
-            // 查找在特定時間段是否存在課程
+            // 查找特定時間段是否存在課程
             const string checkExistenceSql = @"
-        SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, 
-               b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
-               c.MemberID, c.MemberName, 
-               e.TrainerName, e.TrainerID
-        FROM Class AS a
-        INNER JOIN Gyms AS b ON a.GymID = b.GymID
-        INNER JOIN Member AS c ON a.MemberID = c.MemberID
-        INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
-        WHERE a.TrainerID = @TrainerId AND a.StartTime >= @StartTime AND a.EndTime <= @EndTime";
-            var existingClass = (await _db.QueryAsync<Class>(checkExistenceSql,
-                            new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime }))
-                            .FirstOrDefault();
+SELECT a.ClassID, a.CourseStatus, a.CourseUnitPrice, a.StartTime, a.BuildTime, a.EndTime, a.VenueReservationID,
+       b.GymID, b.GymName, b.Address, b.OpentimeStart, b.OpentimeEnd,
+       c.MemberID, c.MemberName, 
+       e.TrainerName, e.TrainerID, e.CourseFee
+FROM Class AS a
+INNER JOIN Gyms AS b ON a.GymID = b.GymID
+INNER JOIN Member AS c ON a.MemberID = c.MemberID
+INNER JOIN Trainers AS e ON a.TrainerID = e.TrainerID
+WHERE a.TrainerID = @TrainerId AND a.StartTime >= @StartTime AND a.EndTime <= @EndTime";
+
+            var existingClass = (await _db.QueryAsync<TrainerClassDTO>(checkExistenceSql,
+                                    new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime }))
+                                    .FirstOrDefault();
 
             if (existingClass != null)
             {
-                // 如果存在重複的課程，返回一個錯誤消息
                 return BadRequest("A class with the same TrainerId and time slot already exists.");
             }
 
+            // 如果CourseStatus为空，设置为'進行中'
+            if (string.IsNullOrEmpty(model.CourseStatus))
+            {
+                model.CourseStatus = "進行中";
+            }
+
+            // 查询教练的CourseFee
+            const string trainerCourseFeeSql = "SELECT CourseFee FROM Trainers WHERE TrainerID = @TrainerId";
+            var courseFee = await _db.QueryFirstOrDefaultAsync<decimal>(trainerCourseFeeSql, new { model.TrainerId });
+
+            // 获取当前时间作为BuildTime
+            var buildTime = DateTime.Now;
+
             // 插入新的課程
-            const string insertSql = @"INSERT INTO Class (TrainerId, StartTime, EndTime,gymId,) 
-                               VALUES (@TrainerId, @StartTime, @EndTime, @OtherValues)";
+            const string insertSql = @"INSERT INTO Class (TrainerId, StartTime, EndTime, GymId , CourseStatus, CourseUnitPrice, VenueReservationID, BuildTime)
+    VALUES (@TrainerId, @StartTime, @EndTime, @GymId, @CourseStatus, @CourseFee, @VenueReservationID, @BuildTime)";
+
             await _db.ExecuteAsync(insertSql,
-                     new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime,  });
+                    new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime, model.GymId, MemberID = model.MemberId, CourseStatus = model.CourseStatus, CourseFee = courseFee, model.VenueReservationID, BuildTime = buildTime });
 
             return Ok(new { Message = "New class created." });
         }
+
+        [HttpDelete("Class/{classId}")]
+        public async Task<IActionResult> DeleteClass(int classId)
+        {
+            // 检查ClassID是否存在
+            const string checkExistenceSql = @"SELECT ClassID FROM Class WHERE ClassID = @ClassID";
+            var existingClassId = await _db.QueryFirstOrDefaultAsync<int>(checkExistenceSql, new { ClassID = classId });
+
+            if (existingClassId == 0)
+            {
+                // 如果ClassID不存在，则返回一个错误消息
+                return NotFound(new { Message = "Class not found." });
+            }
+
+            // 删除课程
+            const string deleteSql = @"DELETE FROM Class WHERE ClassID = @ClassID";
+            await _db.ExecuteAsync(deleteSql, new { ClassID = classId });
+
+            // 返回成功消息
+            return Ok(new { Message = "Class deleted." });
+        }
+
 
 
 

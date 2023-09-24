@@ -21,10 +21,90 @@ namespace FitMatch_API.Controllers
     {
 
         private readonly IDbConnection _db;
+        private readonly string _lineChannelId;
+        private readonly string _lineChannelSecret;
+        private readonly string _lineCallbackUrl;
 
         public LoginController(IConfiguration configuration)
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            _lineChannelId = configuration["LineLogin:ChannelId"];
+            _lineChannelSecret = configuration["LineLogin:ChannelSecret"];
+            _lineCallbackUrl = configuration["LineLogin:CallbackUrl"];
+        }
+
+        [HttpGet("loginWithLine")]
+        public IActionResult LoginWithLine()
+        {
+            var authUrl = $"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={_lineChannelId}&redirect_uri={_lineCallbackUrl}&state={Guid.NewGuid().ToString()}&scope=profile%20openid";
+            return Redirect(authUrl);
+        }
+
+        [HttpGet("line-callback")]
+        public async Task<IActionResult> LineCallback(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return BadRequest("Error: No code received from LINE.");
+            }
+
+            var tokenRequestData = new Dictionary<string, string>
+    {
+        {"grant_type", "authorization_code"},
+        {"code", code},
+        {"redirect_uri", _lineCallbackUrl},
+        {"client_id", _lineChannelId},
+        {"client_secret", _lineChannelSecret}
+    };
+
+            var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.line.me/oauth2/v2.1/token")
+            {
+                Content = new FormUrlEncodedContent(tokenRequestData)
+            };
+
+            var httpClient = new HttpClient();
+            var tokenResponse = await httpClient.SendAsync(tokenRequest);
+            var tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<dynamic>(tokenResponseContent);
+
+            if (tokenData == null)
+            {
+                return BadRequest("Error: No token received from LINE.");
+            }
+
+            string accessToken = tokenData.access_token;
+
+            var profileRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.line.me/v2/profile")
+            {
+                Headers = { { "Authorization", $"Bearer {accessToken}" } }
+            };
+
+            var profileResponse = await httpClient.SendAsync(profileRequest);
+            var profileResponseContent = await profileResponse.Content.ReadAsStringAsync();
+            var profileData = JsonConvert.DeserializeObject<dynamic>(profileResponseContent);
+
+            string lineUserId = profileData.userId;
+            string displayName = profileData.displayName;
+            string profilePictureUrl = profileData.pictureUrl;
+
+            // 檢查LineUsers資料表中是否已存在此userId
+            var sqlCheckUserExists = @"SELECT COUNT(*) FROM LineUsers WHERE LineUserId = @LineUserId";
+            int userCount = await _db.ExecuteScalarAsync<int>(sqlCheckUserExists, new { LineUserId = lineUserId });
+
+            if (userCount == 0)
+            {
+                // 用戶不存在，新增一條記錄
+                var sqlInsertUser = @"INSERT INTO LineUsers (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl)";
+                await _db.ExecuteAsync(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
+            }
+            else
+            {
+                // 用戶已存在，可以根據需求更新登入日期或其他資訊
+                var sqlUpdateLoginDate = @"UPDATE LineUsers SET LoginDate = GETDATE() WHERE LineUserId = @LineUserId";
+                await _db.ExecuteAsync(sqlUpdateLoginDate, new { LineUserId = lineUserId });
+            }
+
+            return Redirect("https://localhost:7088/");  
         }
 
 
@@ -178,6 +258,7 @@ namespace FitMatch_API.Controllers
                 var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(sql, parameters);
                 return Ok(trainer);
             }
+
 
             return BadRequest("Invalid user type");
         }
