@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using System.Text;
 using FitMatch_API.Hubs;
-// ... ¨ä¥L¥²­nªº using Án©ú
+// ... ï¿½ï¿½Lï¿½ï¿½ï¿½nï¿½ï¿½ using ï¿½nï¿½ï¿½
 
 var builder = WebApplication.CreateBuilder(args);
-// ²K¥[ SignalR ªA°È
+// ï¿½Kï¿½[ SignalR ï¿½Aï¿½ï¿½
 builder.Services.AddSignalR();
 
 
@@ -33,22 +33,22 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ³o¬qÅý§Úªº«eºÝ¦a§}³sªº¨ì
+// ï¿½oï¿½qï¿½ï¿½ï¿½Úªï¿½ï¿½eï¿½Ý¦aï¿½}ï¿½sï¿½ï¿½ï¿½ï¿½
 builder.Services.AddCors(options =>
 {
     //options.AddPolicy("AllowMyOrigin",
     //    builder => builder.AllowAnyOrigin()
     options.AddPolicy("CorsPolicy",
-          builder => builder.WithOrigins("https://localhost:7088")  // ´À´«¬°§Aªº«eºÝºô¯¸¦a§}
+          builder => builder.WithOrigins("https://fitmatchclient4.azurewebsites.net")  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½eï¿½Ýºï¿½ï¿½ï¿½ï¿½aï¿½}
 
           .AllowAnyMethod()
             .AllowAnyHeader()
-    .AllowCredentials()); // ¤¹³\SignalR¾ÌÃÒ
+    .AllowCredentials()); // ï¿½ï¿½ï¿½\SignalRï¿½ï¿½ï¿½ï¿½
 });
 
 var app = builder.Build();
 
-// °t¸m¤¤¶¡¥ó
+// ï¿½tï¿½mï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -62,10 +62,10 @@ app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
 app.UseRouting();
 
-app.UseAuthentication(); // ½T«O³o¤@¦æ¦b UseRouting ¤§«á¡A¦ý¦b UseEndpoints ¤§«e
+app.UseAuthentication(); // ï¿½Tï¿½Oï¿½oï¿½@ï¿½ï¿½b UseRouting ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½b UseEndpoints ï¿½ï¿½ï¿½e
 app.UseAuthorization();
 
-// ¥[¤J SignalR
+// ï¿½[ï¿½J SignalR
 app.MapHub<ChatHub>("/chatHub");
 
 
