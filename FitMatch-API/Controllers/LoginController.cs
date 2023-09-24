@@ -83,10 +83,28 @@ namespace FitMatch_API.Controllers
             var profileResponseContent = await profileResponse.Content.ReadAsStringAsync();
             var profileData = JsonConvert.DeserializeObject<dynamic>(profileResponseContent);
 
-            // 這裡可以用 profileData 來檢查你的數據庫是否有這個用戶，如果沒有可以創建一個新用戶
-            // ...
+            string lineUserId = profileData.userId;
+            string displayName = profileData.displayName;
+            string profilePictureUrl = profileData.pictureUrl;
 
-            return Ok(profileData);
+            // 檢查LineUsers資料表中是否已存在此userId
+            var sqlCheckUserExists = @"SELECT COUNT(*) FROM LineUsers WHERE LineUserId = @LineUserId";
+            int userCount = await _db.ExecuteScalarAsync<int>(sqlCheckUserExists, new { LineUserId = lineUserId });
+
+            if (userCount == 0)
+            {
+                // 用戶不存在，新增一條記錄
+                var sqlInsertUser = @"INSERT INTO LineUsers (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl)";
+                await _db.ExecuteAsync(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
+            }
+            else
+            {
+                // 用戶已存在，可以根據需求更新登入日期或其他資訊
+                var sqlUpdateLoginDate = @"UPDATE LineUsers SET LoginDate = GETDATE() WHERE LineUserId = @LineUserId";
+                await _db.ExecuteAsync(sqlUpdateLoginDate, new { LineUserId = lineUserId });
+            }
+
+            return Redirect("https://localhost:7088/");  
         }
 
 
@@ -240,6 +258,7 @@ namespace FitMatch_API.Controllers
                 var trainer = await _db.QuerySingleOrDefaultAsync<Trainer>(sql, parameters);
                 return Ok(trainer);
             }
+
 
             return BadRequest("Invalid user type");
         }
