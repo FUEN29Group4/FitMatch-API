@@ -21,10 +21,72 @@ namespace FitMatch_API.Controllers
     {
 
         private readonly IDbConnection _db;
+        private readonly string _lineChannelId;
+        private readonly string _lineChannelSecret;
+        private readonly string _lineCallbackUrl;
 
         public LoginController(IConfiguration configuration)
         {
             _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            _lineChannelId = configuration["LineLogin:ChannelId"];
+            _lineChannelSecret = configuration["LineLogin:ChannelSecret"];
+            _lineCallbackUrl = configuration["LineLogin:CallbackUrl"];
+        }
+
+        [HttpGet("loginWithLine")]
+        public IActionResult LoginWithLine()
+        {
+            var authUrl = $"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={_lineChannelId}&redirect_uri={_lineCallbackUrl}&state={Guid.NewGuid().ToString()}&scope=profile%20openid";
+            return Redirect(authUrl);
+        }
+
+        [HttpGet("line-callback")]
+        public async Task<IActionResult> LineCallback(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return BadRequest("Error: No code received from LINE.");
+            }
+
+            var tokenRequestData = new Dictionary<string, string>
+    {
+        {"grant_type", "authorization_code"},
+        {"code", code},
+        {"redirect_uri", _lineCallbackUrl},
+        {"client_id", _lineChannelId},
+        {"client_secret", _lineChannelSecret}
+    };
+
+            var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.line.me/oauth2/v2.1/token")
+            {
+                Content = new FormUrlEncodedContent(tokenRequestData)
+            };
+
+            var httpClient = new HttpClient();
+            var tokenResponse = await httpClient.SendAsync(tokenRequest);
+            var tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<dynamic>(tokenResponseContent);
+
+            if (tokenData == null)
+            {
+                return BadRequest("Error: No token received from LINE.");
+            }
+
+            string accessToken = tokenData.access_token;
+
+            var profileRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.line.me/v2/profile")
+            {
+                Headers = { { "Authorization", $"Bearer {accessToken}" } }
+            };
+
+            var profileResponse = await httpClient.SendAsync(profileRequest);
+            var profileResponseContent = await profileResponse.Content.ReadAsStringAsync();
+            var profileData = JsonConvert.DeserializeObject<dynamic>(profileResponseContent);
+
+            // 這裡可以用 profileData 來檢查你的數據庫是否有這個用戶，如果沒有可以創建一個新用戶
+            // ...
+
+            return Ok(profileData);
         }
 
 
