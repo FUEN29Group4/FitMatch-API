@@ -17,7 +17,7 @@
         public int MemberId {get; set;}
 
         public int ClassTypeId {get; set;}
-
+        public int CourseFee { get; set;}
         public int TrainerID { get; set;}
         public string TrainerName { get; set;}
         public string Address {get; set;}

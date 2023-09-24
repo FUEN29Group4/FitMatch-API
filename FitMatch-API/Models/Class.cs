@@ -13,7 +13,7 @@ public partial class Class
 
     public int? GymId { get; set; }
 
-    public int MemberId { get; set; }
+    public int? MemberId { get; set; }
 
     public DateTime? StartTime { get; set; }
 
@@ -21,8 +21,8 @@ public partial class Class
     
     public DateTime? BuildTime { get; set; }
 
-    public string CourseStatus { get; set; }
-    public int CourseUnitPrice {get; set; }
+    public string? CourseStatus { get; set; }
+    public int? CourseUnitPrice {get; set; }
     //public List<Member> Members { get; set; }
 
     //public List<Gym> Gyms { get; set; }
@@ -55,6 +55,7 @@ public partial class Class
     public string? Introduction { get; set; }
 
     public int? Status { get; set; }
+    public int VenueReservationID { get; set; }
 
 
 
