@@ -31,5 +31,19 @@ namespace FitMatch_API.Controllers
                 return Ok(ClassTypes);
             }
         }
+        [HttpGet("detail/{id}")]
+        public async Task<IActionResult> GetDetailAsync(int id)
+        {
+            const string sql = @"SELECT * FROM ClassTypes where classtypeid = @classtypeid and status>0;";
+            var parameters = new { classtypeid = id };
+
+            var classType = await _db.QueryFirstOrDefaultAsync<ClassType>(sql, parameters);
+            if (classType == null)
+            {
+                return NotFound("No data found");
+            }
+            return Ok(classType);
+        }
+
     }
 }
