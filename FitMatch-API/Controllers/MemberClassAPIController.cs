@@ -81,6 +81,8 @@ namespace FitMatch_API.Controllers
             c.GymID,
             c.CourseStatus,
             c.BuildTime,
+            c.StartTime,
+
             t.TrainerID,
             t.TrainerName,
             g.GymId,

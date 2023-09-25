@@ -255,13 +255,15 @@ WHERE a.TrainerID = @TrainerId AND a.StartTime >= @StartTime AND a.EndTime <= @E
             var buildTime = DateTime.Now;
 
             // 插入新的課程
-            const string insertSql = @"INSERT INTO Class (TrainerId, StartTime, EndTime, GymId , CourseStatus, CourseUnitPrice, VenueReservationID, BuildTime)
-    VALUES (@TrainerId, @StartTime, @EndTime, @GymId, @CourseStatus, @CourseFee, @VenueReservationID, @BuildTime)";
+            const string insertSql = @"
+                    INSERT INTO Class (TrainerId, StartTime, EndTime, GymId , CourseStatus, CourseUnitPrice, VenueReservationID, BuildTime)
+                    VALUES (@TrainerId, @StartTime, @EndTime, @GymId, @CourseStatus, @CourseFee, @VenueReservationID, @BuildTime);
+                    SELECT CAST(SCOPE_IDENTITY() as int)";
 
-            await _db.ExecuteAsync(insertSql,
+            var classId = await _db.ExecuteScalarAsync<int>(insertSql,
                     new { model.TrainerId, StartTime = model.StartTime, EndTime = model.EndTime, model.GymId, MemberID = model.MemberId, CourseStatus = model.CourseStatus, CourseFee = courseFee, model.VenueReservationID, BuildTime = buildTime });
 
-            return Ok(new { Message = "New class created." });
+            return Ok(new { ClassId = classId, Message = "New class created." });
         }
 
         [HttpDelete("Class/{classId}")]

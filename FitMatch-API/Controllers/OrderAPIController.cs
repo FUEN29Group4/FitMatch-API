@@ -313,7 +313,7 @@ namespace FitMatch_API.Controllers
          return orderdetail;
      },
      param: parameters,
-     splitOn: "OrdetailId"
+     splitOn: "ProductId"
  );
 
 

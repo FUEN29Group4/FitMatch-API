@@ -30,5 +30,20 @@ namespace FitMatch_API.Models
 
         //public List<Product> Products { get; set; } 
 
+        public int OrderDetailId { get; set; }//訂單明細編號
+
+        public int OrderId { get; set; }//訂單編號
+
+        public int? Quantity { get; set; }//數量
+
+
+        public int? MemberId { get; set; }//會員編號
+
+
+        public List<Member> Members { get; set; } = new List<Member>();
+        public List<Order> Orders { get; set; } = new List<Order>();
+
+        public List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
     }
 }
