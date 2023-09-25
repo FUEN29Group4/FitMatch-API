@@ -99,7 +99,7 @@ namespace FitMatch_API.Controllers
                 int newId = await _db.ExecuteScalarAsync<int>(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
 
                 var token = GenerateJwtToken(newId, "LineUser");
-                return Redirect($"https://fitmatchclient4.azurewebsites.net/?token={token}");
+                return Redirect($"https://localhost:7088/?token={token}");
             }
             else
             {
@@ -108,7 +108,7 @@ namespace FitMatch_API.Controllers
                 await _db.ExecuteAsync(sqlUpdateLoginDate, new { LineUserId = lineUserId });
 
                 var token = GenerateJwtToken(existingUserId.Value, "LineUser"); // 使用已存在的ID生成令牌
-                return Redirect($"https://fitmatchclient4.azurewebsites.net/?token={token}");
+                return Redirect($"https://localhost:7088/?token={token}");
             }
 
         }
@@ -327,7 +327,7 @@ namespace FitMatch_API.Controllers
 
         private async Task SendResetPasswordEmail(string email, string token)
         {
-            var resetLink = $"https://fitmatchclient4.azurewebsites.net/ResetPassword/ResetPassword?token={token}";
+            var resetLink = $"https://localhost:7088/ResetPassword/ResetPassword?token={token}";
 
             // 初始化 SmtpClient
             using (SmtpClient smtp = new SmtpClient())
