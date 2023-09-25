@@ -24,6 +24,12 @@ namespace FitMatch_API.Hubs
         }
         public async Task InitializeClient(int senderId)
         {
+            // 刪除舊連線
+            if (ConnectionMapping.ContainsKey(senderId.ToString()))
+            {
+                ConnectionMapping.Remove(senderId.ToString());
+            }
+            // 添加新的連線
             ConnectionMapping[senderId.ToString()] = Context.ConnectionId;
             await Clients.Client(Context.ConnectionId).SendAsync("Initialized", true);
         }
