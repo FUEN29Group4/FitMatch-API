@@ -4,10 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using System.Text;
 using FitMatch_API.Hubs;
-// ... ��L���n�� using �n��
 
 var builder = WebApplication.CreateBuilder(args);
-// �K�[ SignalR �A��
+// // 添加 SignalR 服務
 builder.Services.AddSignalR();
 
 
@@ -33,24 +32,24 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// �o�q���ڪ��e�ݦa�}�s����
+// 這段讓我的前端地址連的到
 builder.Services.AddCors(options =>
 {
     //options.AddPolicy("AllowMyOrigin",
     //    builder => builder.AllowAnyOrigin()
     options.AddPolicy("CorsPolicy",
 
-          builder => builder.WithOrigins("https://localhost:7088")  // �������A���e�ݺ����a�}
+          builder => builder.WithOrigins("https://localhost:7088")  // 替換為你的前端網站地址
 
 
           .AllowAnyMethod()
             .AllowAnyHeader()
-    .AllowCredentials()); // ���\SignalR����
+    .AllowCredentials()); // 允許SignalR憑證
 });
 
 var app = builder.Build();
 
-// �t�m������
+// 配置中間件
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -64,10 +63,10 @@ app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
 app.UseRouting();
 
-app.UseAuthentication(); // �T�O�o�@��b UseRouting ����A���b UseEndpoints ���e
+app.UseAuthentication(); 
 app.UseAuthorization();
 
-// �[�J SignalR
+// 加入 SignalR
 app.MapHub<ChatHub>("/chatHub");
 
 
