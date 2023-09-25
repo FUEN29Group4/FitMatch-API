@@ -78,45 +78,45 @@ namespace FitMatch_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMemberByIdAsync(int id, [FromBody] Member MemberData)
         {
-            // 初始化一个空的字符串列表来存储需要更新的列
-            List<string> updateClauses = new List<string>();
+            //// 初始化一个空的字符串列表来存储需要更新的列
+            //List<string> updateClauses = new List<string>();
 
-            // 使用条件语句检查每个要更新的列
-            if (!string.IsNullOrEmpty(MemberData.MemberName))
-            {
-                updateClauses.Add("MemberName = @MemberName");
-            }
+            //// 使用条件语句检查每个要更新的列
+            //if (!string.IsNullOrEmpty(MemberData.MemberName))
+            //{
+            //    updateClauses.Add("MemberName = @MemberName");
+            //}
 
-            if (!string.IsNullOrEmpty(MemberData.Address))
-            {
-                updateClauses.Add("Address = @Address");
-            }
+            //if (!string.IsNullOrEmpty(MemberData.Address))
+            //{
+            //    updateClauses.Add("Address = @Address");
+            //}
 
-            if (!string.IsNullOrEmpty(MemberData.Phone))
-            {
-                updateClauses.Add("Phone = @Phone");
-            }
+            //if (!string.IsNullOrEmpty(MemberData.Phone))
+            //{
+            //    updateClauses.Add("Phone = @Phone");
+            //}
 
-            if (!string.IsNullOrEmpty(MemberData.Email))
-            {
-                updateClauses.Add("Email = @Email");
-            }
+            //if (!string.IsNullOrEmpty(MemberData.Email))
+            //{
+            //    updateClauses.Add("Email = @Email");
+            //}
 
-            if (!string.IsNullOrEmpty(MemberData.Password))
-            {
-                updateClauses.Add("Password = @Password");
-            }
+            //if (!string.IsNullOrEmpty(MemberData.Password))
+            //{
+            //    updateClauses.Add("Password = @Password");
+            //}
 
-            if (!string.IsNullOrEmpty(MemberData.Photo))
-            {
-                updateClauses.Add("Photo = @Photo");
-            }
+            //if (!string.IsNullOrEmpty(MemberData.Photo))
+            //{
+            //    updateClauses.Add("Photo = @Photo");
+            //}
 
-            // 构建SQL查询字符串
-            string updateColumns = string.Join(", ", updateClauses);
-            string sql = $@"UPDATE Member SET {updateColumns} WHERE MemberID = @MemberId;";
+            //// 构建SQL查询字符串
+            //string updateColumns = string.Join(", ", updateClauses);
+            //string sql = $@"UPDATE Member SET {updateColumns} WHERE MemberID = @MemberId;";
 
-            //const string sql = @"UPDATE Member SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
+            const string sql = @"UPDATE Member SET MemberName = @MemberName, Address = @Address, Phone = @Phone, Email = @Email,  Password = @Password , Photo = @Photo WHERE MemberID = @MemberId;";
 
             int rowsAffected = await _db.ExecuteAsync(sql,
                 new
