@@ -40,7 +40,7 @@ builder.Services.AddCors(options =>
     //    builder => builder.AllowAnyOrigin()
     options.AddPolicy("CorsPolicy",
 
-          builder => builder.WithOrigins("https://fitmatchclient4.azurewebsites.net")  // �������A���e�ݺ����a�}
+          builder => builder.WithOrigins("https://localhost:7088")  // �������A���e�ݺ����a�}
 
 
           .AllowAnyMethod()
