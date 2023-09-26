@@ -25,7 +25,7 @@ namespace FitMatch_API.Controllers
         public async Task<IActionResult> GetAllAsync(int id)
         {
 
-            const string sql = @"SELECT TrainerID FROM trainers where gender = 1 and trainerid = @trainerid;";
+            const string sql = @"SELECT TrainerID FROM trainers where Approved = 1 and trainerid = @trainerid;";
             var parameters = new { trainerid = id };
 
             var trainers = await _db.QueryFirstOrDefaultAsync<Trainer>(sql, parameters);
