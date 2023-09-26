@@ -96,7 +96,7 @@ namespace FitMatch_API.Controllers
             string token = "cKkJQCCyc9MWchZaeE8wr82jvH7kdyJ8RTXp1FgS4kA";
             string url = "https://notify-api.line.me/api/notify";
 
-            string message = $"\n預約編號:{reservationData.ClassId}\n會員編號:{reservationData.MemberId}";
+            string message = $"\n{reservationData.trainerName}教練收到預約\n預約編號:{reservationData.ClassId}\n會員編號:{reservationData.MemberId}";
 
             try
             {
@@ -130,6 +130,7 @@ namespace FitMatch_API.Controllers
         {
             public int ClassId { get; set; }
             public int MemberId { get; set; }
+            public string trainerName { get; set; }
         }
 
         //從課程預約之週曆 讀取教練
