@@ -174,9 +174,10 @@ namespace FitMatch_API.Controllers
                 OrderTime = DateTime.Now, // 您可以根据需要设置订单时间
                 //PaymentMethod = orderViewModel.PaymentMethod,
                 //ShippingMethod = orderViewModel.ShippingMethod,
-                PaymentMethod = "信用卡",
-                ShippingMethod = "宅配",
-                Status = true
+                PaymentMethod = "信用卡", //這裡串接上金流後要修
+                ShippingMethod = "宅配",//這裡串接上金流後要修
+                PayTime = DateTime.Now,//這裡串接上金流後要修
+                Status = true //這裡串接上金流後要修
             };
             // 使用Dapper執行插入操作，並獲取訂單編號
             int orderId = _context.ExecuteScalar<int>(@"INSERT INTO [Order] (MemberID, TotalPrice, OrderTime, PaymentMethod, ShippingMethod)
