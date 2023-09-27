@@ -18,7 +18,8 @@ public partial class OrderViewModel
             {
                 // 使用LINQ計算每個OrderDetail的價格總和
                 var Total = CartItems.Sum(item => item.Price * item.Quantity);
-                return (decimal?)(Total * 1.05);
+                //return (decimal?)(Total * 1.05);
+                return (Total);
             }
             return null;
         }
