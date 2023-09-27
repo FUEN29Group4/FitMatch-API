@@ -135,7 +135,6 @@ namespace FitMatch_API.Controllers
             }
         }
 
-
         [HttpPost("VenueReservation")]
         public async Task<IActionResult> CreateOrUpdateVenueReservation(VenueReservation model)
         {
@@ -149,20 +148,35 @@ namespace FitMatch_API.Controllers
 
             if (existingReservation != null)
             {
-                // 如果存在，更新場館信息
-                const string updateSql = @"UPDATE VenueReservation SET GymId = @GymId WHERE VenueReservationID = @VenueReservationID";
-                await _db.ExecuteAsync(updateSql, new { model.GymId, existingReservation.VenueReservationID });
-                return Ok(new { Message = "Reservation updated." });
+                // 如果存在，更新场馆信息
+                const string updateVenueReservationSql = @"UPDATE VenueReservation SET GymId = @GymId WHERE VenueReservationID = @VenueReservationID";
+                await _db.ExecuteAsync(updateVenueReservationSql, new { model.GymId, existingReservation.VenueReservationID });
+
+                // 检查Class表中是否存在相应的条目
+                const string checkClassExistenceSql = @"SELECT * FROM Class WHERE VenueReservationID = @VenueReservationID";
+                var existingClass = (await _db.QueryAsync<Class>(checkClassExistenceSql, new { existingReservation.VenueReservationID })).FirstOrDefault();
+
+                // 如果Class表中存在相应的条目，则更新
+                if (existingClass != null)
+                {
+                    const string updateClassSql = @"UPDATE Class SET GymId = @GymId WHERE VenueReservationID = @VenueReservationID";
+                    await _db.ExecuteAsync(updateClassSql, new { model.GymId, existingReservation.VenueReservationID });
+                }
+
+                return Ok(new { Message = "Reservation and Class updated." });
             }
             else
             {
-                // 如果不存在，創建新的預定
+                // 如果不存在，创建新的预定
                 const string insertSql = @"INSERT INTO VenueReservation (TrainerID, GymId, VenueReservationDate) VALUES (@TrainerId, @GymId, @VenueReservationDate)";
                 await _db.ExecuteAsync(insertSql, model);
+
+                // 如果需要，您可以在这里加入向Class表插入新数据的代码
+
                 return Ok(new { Message = "New reservation created." });
             }
-
         }
+
         [HttpGet("VenueReservation/{id}")]
         public async Task<IActionResult> GetAllVenueReservation(int id)
         {

@@ -87,28 +87,31 @@ namespace FitMatch_API.Controllers
             string displayName = profileData.displayName;
             string profilePictureUrl = profileData.pictureUrl;
 
-            // 檢查LineUsers資料表中是否已存在此userId
-            var sqlCheckUserExists = @"SELECT Id FROM LineUsers WHERE LineUserId = @LineUserId";
-            int? existingUserId = await _db.ExecuteScalarAsync<int?>(sqlCheckUserExists, new { LineUserId = lineUserId });
+            // 檢查Member資料表中是否已存在此userId 
+            var sqlCheckUserExists = @"SELECT MemberID FROM Member WHERE LineUserId = @LineUserId";
+            int? existingMemberId = await _db.ExecuteScalarAsync<int?>(sqlCheckUserExists, new { LineUserId = lineUserId });
 
-            if (!existingUserId.HasValue)
+            if (!existingMemberId.HasValue)
             {
                 // 用戶不存在，新增一條記錄
-                var sqlInsertUser = @"INSERT INTO LineUsers (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl);
-                          SELECT CAST(SCOPE_IDENTITY() as int)"; // 获取新插入的ID
-                int newId = await _db.ExecuteScalarAsync<int>(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
+                var sqlInsertUser = @"INSERT INTO Member (LineUserId, DisplayName, ProfilePictureUrl) VALUES (@LineUserId, @DisplayName, @ProfilePictureUrl);
+                    SELECT CAST(SCOPE_IDENTITY() as int)"; // 获取新插入的ID
+                int newMemberId = await _db.ExecuteScalarAsync<int>(sqlInsertUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
 
-                var token = GenerateJwtToken(newId, "LineUser");
-                return Redirect($"https://localhost:7088/?token={token}");
+                var token = GenerateJwtToken(newMemberId, "Member");
+                return Redirect($"https://localhost:7088/?token={token}&memberId={newMemberId}");
             }
             else
             {
-                // 用戶已存在，可以根據需求更新登入日期或其他資訊
-                var sqlUpdateLoginDate = @"UPDATE LineUsers SET LoginDate = GETDATE() WHERE LineUserId = @LineUserId";
-                await _db.ExecuteAsync(sqlUpdateLoginDate, new { LineUserId = lineUserId });
+                // Update existing user data with potential new data from LINE
+                var sqlUpdateUser = @"UPDATE Member 
+                          SET ProfilePictureUrl = @ProfilePictureUrl, DisplayName = @DisplayName, LoginDate = GETDATE() 
+                          WHERE LineUserId = @LineUserId";
+                await _db.ExecuteAsync(sqlUpdateUser, new { LineUserId = lineUserId, DisplayName = displayName, ProfilePictureUrl = profilePictureUrl });
 
-                var token = GenerateJwtToken(existingUserId.Value, "LineUser"); // 使用已存在的ID生成令牌
-                return Redirect($"https://localhost:7088/?token={token}");
+                var token = GenerateJwtToken(existingMemberId.Value, "Member");
+
+                return Redirect($"https://localhost:7088/?token={token}&memberId={existingMemberId.Value}");
             }
 
         }
@@ -251,18 +254,6 @@ namespace FitMatch_API.Controllers
             var userId = int.Parse(claims.FindFirst("Id").Value);
             var userType = claims.FindFirst("Type").Value;
 
-            // 首先查詢 LineUsers 表以獲取 LINE 用戶資訊
-            var lineUserSql = @"SELECT DisplayName, ProfilePictureUrl FROM LineUsers WHERE Id = @Id";
-            var lineUserParameters = new { Id = userId };
-            var lineUser = await _db.QuerySingleOrDefaultAsync<dynamic>(lineUserSql, lineUserParameters);
-
-            if (lineUser != null)
-            {
-                // 如果在 LineUsers 表中找到相應的資料，直接返回
-                return Ok(lineUser);
-            }
-
-            // 根據 userType 和 userId 從數據庫中獲取用戶詳細信息
             if (userType == "Member")
             {
                 var sql = @"SELECT * FROM Member WHERE MemberId = @MemberId";
@@ -270,6 +261,7 @@ namespace FitMatch_API.Controllers
                 var member = await _db.QuerySingleOrDefaultAsync<Member>(sql, parameters);
                 return Ok(member);
             }
+
             else if (userType == "Trainer")
             {
                 var sql = @"SELECT * FROM Trainers WHERE TrainerId = @TrainerId";
