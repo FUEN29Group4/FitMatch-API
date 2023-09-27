@@ -30,6 +30,12 @@ public partial class Member
 
     public string Salt { get; set; }
 
+    public string LineUserId { get; set; }
 
+    public string DisplayName { get; set; }
+
+    public string ProfilePictureUrl { get; set; }
+
+    public DateTime? LoginDate { get; set; }
 
 }
