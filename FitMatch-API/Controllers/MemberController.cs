@@ -111,6 +111,10 @@ namespace FitMatch_API.Controllers
             {
                 updateClauses.Add("Photo = @Photo");
             }
+            if (!string.IsNullOrEmpty(MemberData.Salt))
+            {
+                updateClauses.Add("Salt = @Salt");
+            }
 
             // 构建SQL查询字符串
             string updateColumns = string.Join(", ", updateClauses);
@@ -128,6 +132,7 @@ namespace FitMatch_API.Controllers
                     Email = MemberData.Email,
                     Password = MemberData.Password,
                     Photo = MemberData.Photo,
+                    Salt = MemberData.Salt
 
                 });
 
