@@ -211,5 +211,53 @@ namespace FitMatch_API.Controllers
             public int? ProductId { get; set; }
         }
 
+
+
+        //讀取top4教練
+
+        [HttpGet("GetTopTrainer")]
+        public async Task<IActionResult> GetTopTrainer()
+        {
+            const string sql = @"
+            WITH RankedTrainers AS (
+                SELECT  T.TrainerID,
+                        T.TrainerName,
+                        T.Gender,
+                        T.Photo,
+                        T.Expertise,
+                        ROW_NUMBER() OVER (ORDER BY COUNT(C.TrainerID) DESC) AS 'Rank'
+                FROM    Trainers AS T 
+                LEFT JOIN Class AS C ON T.TrainerID = C.TrainerID AND C.CourseStatus= N'已完成'
+                GROUP BY T.TrainerID, T.TrainerName, T.Gender, T.Photo, T.Expertise
+            )
+            SELECT DISTINCT [TrainerID],
+                    [TrainerName],
+                    [Gender],
+                    [Photo],
+                    [Expertise]
+        
+            FROM    RankedTrainers
+            WHERE   Rank <= 4
+            ";
+
+            using (var multi = await _db.QueryMultipleAsync(sql))
+            {
+                var trainers = multi.Read<Trainer>().ToList();
+                // 基本驗證，確保資料存在
+                if (trainers == null)
+                {
+                    return NotFound("No data found");
+                }
+                return Ok(trainers);
+            }
+        }
+
+
+
+
+
+
+
+
     }
 }
