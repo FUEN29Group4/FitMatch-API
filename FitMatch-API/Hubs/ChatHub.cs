@@ -6,6 +6,7 @@ using FitMatch_API.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace FitMatch_API.Hubs
 {
@@ -22,17 +23,17 @@ namespace FitMatch_API.Hubs
             _logger = logger;
 
         }
-        public async Task InitializeClient(int senderId)
-        {
-            // 刪除舊連線
-            if (ConnectionMapping.ContainsKey(senderId.ToString()))
-            {
-                ConnectionMapping.Remove(senderId.ToString());
-            }
-            // 添加新的連線
-            ConnectionMapping[senderId.ToString()] = Context.ConnectionId;
-            await Clients.Client(Context.ConnectionId).SendAsync("Initialized", true);
-        }
+        //public async Task InitializeClient(int senderId)
+        //{
+        //    // 刪除舊連線
+        //    if (ConnectionMapping.ContainsKey(senderId.ToString()))
+        //    {
+        //        ConnectionMapping.Remove(senderId.ToString());
+        //    }
+        //    // 添加新的連線
+        //    ConnectionMapping[senderId.ToString()] = Context.ConnectionId;
+        //    await Clients.Client(Context.ConnectionId).SendAsync("Initialized", true);
+        //}
 
         
 
@@ -46,12 +47,14 @@ namespace FitMatch_API.Hubs
         //    await base.onconnectedasync();
         //}
 
-        public void SendMessage(int receiverId, string message, string senderId, string role)
+        public async Task SendMessage(int receiverId, string message, string senderId, string role)
         {
-            try
-            {
 
-                CustomerService customerService = new CustomerService
+            var formattedMessage = $"{message}";
+            await Clients.All.SendAsync("ReceiveMessage", senderId, formattedMessage, role);
+
+
+            CustomerService customerService = new CustomerService
                 {
                     DateTime = DateTime.Now,
                     MessageContent = message,
@@ -66,43 +69,40 @@ namespace FitMatch_API.Hubs
 VALUES (@SenderId, @ReceiverId, @MessageContent, @DateTime,@Role)";
                 _db.ExecuteAsync(sql, customerService);
 
-                // Send the message if receiver's ConnectionId exists
-                // 发送消息给接收者
-                //if (ConnectionMapping.TryGetValue(Context.ConnectionId, out string receiverConnectionId))
-                //{
-                //    Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderId, message, role);
-                //}
-                //else
-                //{
-                //    _logger.LogWarning($"No client associated with receiverId: {receiverId}");
-                //}
-                string ConnectonId = ConnectionMapping.First().Value != Context.ConnectionId ?ConnectionMapping.First().Value : ConnectionMapping.Last().Value;
-                if (ConnectionMapping.Count!=0)
-                {
-                    Clients.Client(ConnectonId).SendAsync("ReceiveMessage", senderId, message, role);
-                }
-                else
-                {
-                    _logger.LogWarning($"No client associated with receiverId: {receiverId}");
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
-            }
-
         }
+        public static List<string> ConnIDList = new List<string>();
         public override async Task OnConnectedAsync()
         {
-            var senderId = Context.GetHttpContext().Request.Headers["senderId"].ToString();
-            ConnectionMapping[Context.ConnectionId] = Context.ConnectionId;
+            if (ConnIDList.Where(p => p == Context.ConnectionId).FirstOrDefault() == null)
+            {
+                ConnIDList.Add(Context.ConnectionId);
+            }
+            // 更新連線 ID 列表
+            string jsonString = JsonConvert.SerializeObject(ConnIDList);
+            //await Clients.All.SendAsync("UpdList", jsonString);
+
+            //// 更新個人 ID
+            //await Clients.Client(Context.ConnectionId).SendAsync("UpdSelfID", Context.ConnectionId);
+
+            //// 更新聊天內容
+            //await Clients.All.SendAsync("UpdContent", "新連線 ID: " + Context.ConnectionId);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            var senderId = Context.GetHttpContext().Request.Headers["senderId"].ToString();
-            ConnectionMapping.Remove(senderId);
+            string id = ConnIDList.Where(p => p == Context.ConnectionId).FirstOrDefault();
+            if (id != null)
+            {
+                ConnIDList.Remove(id);
+            }
+            // 更新連線 ID 列表
+            string jsonString = JsonConvert.SerializeObject(ConnIDList);
+            //await Clients.All.SendAsync("UpdList", jsonString);
+
+            // 更新聊天內容
+            //await Clients.All.SendAsync("UpdContent", "已離線 ID: " + Context.ConnectionId);
+
             await base.OnDisconnectedAsync(exception);
         }
 
