@@ -22,7 +22,7 @@ namespace FitMatch_API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTrainerByIdAsync(int id)
         {
-            const string sql = @"SELECT TrainerID,TrainerName,Phone,Address,Photo,CourseFee,Introduce,Certificate,Expertise,Experience,Salt FROM Trainers where TrainerID = @TrainerId";
+            const string sql = @"SELECT TrainerID,TrainerName,Phone,Address,Photo,CourseFee,Introduce,Certificate,Expertise,Experience,Salt,Approved FROM Trainers where TrainerID = @TrainerId";
 
             var trainer = await _db.QueryFirstOrDefaultAsync<Trainer>(sql, new { TrainerId = id });
 
