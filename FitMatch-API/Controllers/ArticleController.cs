@@ -12,6 +12,13 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 
+
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+
+
+
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace FitMatch_API.Controllers
@@ -105,47 +112,18 @@ namespace FitMatch_API.Controllers
             }
         }
 
-        
-        [HttpGet("healthy")]
-        public async Task<IActionResult> Gethealthy()
+
+        [HttpGet("titles")]
+        public IActionResult GetNewsTitles()
         {
             try
             {
-                string url = "https://newsapi.org/v2/everything?q=%E5%81%A5%E5%BA%B7&searchIn=title&language=zh&from=2023-09-15&sortBy=publishedAt&apiKey=5aa14d4235a64247940a4418047a5153";
-                HttpClient client = new HttpClient();
-                client.BaseAddress = new Uri(url);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Add("user-agent", "News-API-csharp/0.1");
-                //using (HttpClient client = new HttpClient())
-                //{
-                HttpResponseMessage response = await client.GetAsync(url);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string jsonContent = await response.Content.ReadAsStringAsync();
-
-                    // 解析JSON数据
-                    var newsResponse = JsonConvert.DeserializeObject<NewsApiResponse>(jsonContent);
-
-                    // 检查响应中是否有文章
-                    if (newsResponse.articles != null)
-                    {
-                        return Ok(newsResponse.articles);
-                    }
-                    else
-                    {
-                        return NotFound("沒有找到新聞文章");
-                    }
-                }
-                else
-                {
-                    return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
-                }
-                //}
+                List<string> chineseTitles = GetGoogleNewsTitles();
+                return Ok(chineseTitles);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"內部服務器錯誤: {ex.Message}");
+                return StatusCode(500, $"内部服务器错误: {ex.Message}");
             }
         }
 
@@ -182,6 +160,51 @@ namespace FitMatch_API.Controllers
             public string url { get; set; }
             // 添加其他你需要的属性
         }
+        private List<string> GetGoogleNewsTitles()
+        {
+                ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.AddArgument("--headless"); // 启用无头模式
 
+            using (var driver = new ChromeDriver(chromeOptions))
+            {
+
+
+                driver.Navigate().GoToUrl("https://news.google.com/home?hl=zh-TW&gl=TW&ceid=TW:zh-Hant");
+
+
+                // 模擬滾動，以便加載更多內容
+                ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollTo(0, document.body.scrollHeight)");
+   
+
+
+                // 使用等待确保页面加载完成
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(100));
+                wait.Until(d => d.FindElement(By.CssSelector(".MCAGUe")));
+                wait.Until(d => d.FindElement(By.CssSelector(".IL9Cne")));
+                wait.Until(d => d.FindElement(By.CssSelector(".B6pJDd")));
+                wait.Until(d => d.FindElement(By.CssSelector("h4")));
+                wait.Until(d => d.FindElement(By.CssSelector(".JtKRv.iTin5e")));
+
+
+                // 初始化一个空列表来存储所有标题
+                var allTitles = new List<string>();
+
+                // 定义多个 CSS 选择器
+                string[] selectors = {"h4" };
+
+                foreach (var selector in selectors)
+                {
+                    // 获取当前选择器对应的元素列表
+                    var titleElements = driver.FindElements(By.CssSelector(selector));
+
+                    foreach (var titleElement in titleElements)
+                    {
+                        allTitles.Add(titleElement.Text);
+                    }
+                }
+
+                return allTitles;
+            }
+        }
     }
 }
