@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using System.Xml;
 
 
 
@@ -104,7 +105,7 @@ namespace FitMatch_API.Controllers
                 {
                     return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
                 }
-             
+
             }
             catch (Exception ex)
             {
@@ -126,27 +127,27 @@ namespace FitMatch_API.Controllers
                 //{
                 HttpResponseMessage response = await client.GetAsync(url);
 
-                    if (response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonContent = await response.Content.ReadAsStringAsync();
+
+                    // 解析JSON数据
+                    var newsResponse = JsonConvert.DeserializeObject<NewsApiResponse>(jsonContent);
+
+                    // 检查响应中是否有文章
+                    if (newsResponse.articles != null)
                     {
-                        string jsonContent = await response.Content.ReadAsStringAsync();
-
-                        // 解析JSON数据
-                        var newsResponse = JsonConvert.DeserializeObject<NewsApiResponse>(jsonContent);
-
-                        // 检查响应中是否有文章
-                        if (newsResponse.articles != null)
-                        {
-                            return Ok(newsResponse.articles);
-                        }
-                        else
-                        {
-                            return NotFound("沒有找到新聞文章");
-                        }
+                        return Ok(newsResponse.articles);
                     }
                     else
                     {
-                        return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
+                        return NotFound("沒有找到新聞文章");
                     }
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, "無法獲取新聞數據");
+                }
                 //}
             }
             catch (Exception ex)
@@ -157,18 +158,27 @@ namespace FitMatch_API.Controllers
 
 
         [HttpGet("titles")]
-        public IActionResult GetNewsTitles()
+        public IActionResult GetNewsTitles(string url)
         {
             try
             {
-                List<string> chineseTitles = GetGoogleNewsTitles();
+                if (string.IsNullOrEmpty(url))
+                {
+                    return BadRequest("URL 參數不能為空。");
+                }
+
+                List<string> chineseTitles = GetGoogleNewsTitles(url);
                 return Ok(chineseTitles);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"内部服务器错误: {ex.Message}");
+                // 记录异常堆栈信息
+                Console.WriteLine(ex.StackTrace);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, $"內部服務器錯誤: {ex.Message}");
             }
         }
+
 
 
 
@@ -203,48 +213,62 @@ namespace FitMatch_API.Controllers
             public string url { get; set; }
             // 添加其他你需要的属性
         }
-        private List<string> GetGoogleNewsTitles()
+        private List<string> GetGoogleNewsTitles(string url)
         {
-                ChromeOptions chromeOptions = new ChromeOptions();
+            ChromeOptions chromeOptions = new ChromeOptions();
+
+            // 设置 User-Agent
+            chromeOptions.AddArgument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"); // 替换成你想要的用户代理字符串
+
             chromeOptions.AddArgument("--headless"); // 启用无头模式
 
             using (var driver = new ChromeDriver(chromeOptions))
             {
-
-
-                driver.Navigate().GoToUrl("https://news.google.com/home?hl=zh-TW&gl=TW&ceid=TW:zh-Hant");
-
+                driver.Navigate().GoToUrl(url);
 
                 // 模擬滾動，以便加載更多內容
                 ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollTo(0, document.body.scrollHeight)");
-   
 
 
                 // 使用等待确保页面加载完成
                 var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(100));
-                wait.Until(d => d.FindElement(By.CssSelector(".MCAGUe")));
-                wait.Until(d => d.FindElement(By.CssSelector(".IL9Cne")));
-                wait.Until(d => d.FindElement(By.CssSelector(".B6pJDd")));
-                wait.Until(d => d.FindElement(By.CssSelector("h4")));
-                wait.Until(d => d.FindElement(By.CssSelector(".JtKRv.iTin5e")));
+                wait.Until(d => d.FindElement(By.CssSelector("h1")));
+                wait.Until(d => d.FindElement(By.CssSelector("img")));
+                wait.Until(d => d.FindElement(By.CssSelector("p")));
+                //wait.Until(d => d.FindElement(By.CssSelector("h4")));
+                //wait.Until(d => d.FindElement(By.CssSelector(".JtKRv.iTin5e")));
 
 
                 // 初始化一个空列表来存储所有标题
                 var allTitles = new List<string>();
 
                 // 定义多个 CSS 选择器
-                string[] selectors = {"h4" };
+                string[] selectors = { "h1", "p", "img" };
 
                 foreach (var selector in selectors)
                 {
                     // 获取当前选择器对应的元素列表
-                    var titleElements = driver.FindElements(By.CssSelector(selector));
+                    var elements = driver.FindElements(By.CssSelector(selector));
 
-                    foreach (var titleElement in titleElements)
+                    foreach (var element in elements)
                     {
-                        allTitles.Add(titleElement.Text);
+                        if (selector == "img")
+                        {
+                            // 对于<img>元素，获取src属性
+                            string src = element.GetAttribute("src");
+                            if (!string.IsNullOrEmpty(src))
+                            {
+                                allTitles.Add(src);
+                            }
+                        }
+                        else
+                        {
+                            // 对于其他元素，获取文本内容
+                            allTitles.Add(element.Text);
+                        }
                     }
                 }
+
 
                 return allTitles;
             }
