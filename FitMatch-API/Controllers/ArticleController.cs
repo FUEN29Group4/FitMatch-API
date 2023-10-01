@@ -75,7 +75,7 @@ namespace FitMatch_API.Controllers
         {
             try
             {
-                string url = "https://newsapi.org/v2/everything?q=%E5%81%A5%E5%BA%B7&searchIn=title&language=zh&from=2023-09-15&sortBy=publishedAt&apiKey=5aa14d4235a64247940a4418047a5153";
+                string url = "https://newsapi.org/v2/everything?q=%E5%8F%B0%E7%81%A3&searchIn=title&language=zh&sortBy=publishedAt&apiKey=5aa14d4235a64247940a4418047a5153";
                 HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(url);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -218,7 +218,7 @@ namespace FitMatch_API.Controllers
             ChromeOptions chromeOptions = new ChromeOptions();
 
             // 设置 User-Agent
-            chromeOptions.AddArgument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"); // 替换成你想要的用户代理字符串
+            chromeOptions.AddArgument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"); // 替换成你想要的用户代理字符串
 
             chromeOptions.AddArgument("--headless"); // 启用无头模式
 
@@ -231,7 +231,7 @@ namespace FitMatch_API.Controllers
 
 
                 // 使用等待确保页面加载完成
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(100));
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
                 wait.Until(d => d.FindElement(By.CssSelector("h1")));
                 wait.Until(d => d.FindElement(By.CssSelector("img")));
                 wait.Until(d => d.FindElement(By.CssSelector("p")));
@@ -244,22 +244,64 @@ namespace FitMatch_API.Controllers
 
                 // 定义多个 CSS 选择器
                 string[] selectors = { "h1", "p", "img" };
+                bool foundFirstImage = false; // 添加一个标志变量
 
                 foreach (var selector in selectors)
                 {
                     // 获取当前选择器对应的元素列表
                     var elements = driver.FindElements(By.CssSelector(selector));
+                    var imageCount = 0;
 
                     foreach (var element in elements)
                     {
-                        if (selector == "img")
+
+                        if (selector == "h1")
                         {
-                            // 对于<img>元素，获取src属性
-                            string src = element.GetAttribute("src");
-                            if (!string.IsNullOrEmpty(src))
+                            // 对于<h1>元素，获取文本内容，并添加 "title:" 前缀
+                            string h1Text = element.Text;
+                            if (!string.IsNullOrEmpty(h1Text))
                             {
-                                allTitles.Add(src);
+                                allTitles.Add($"title: {h1Text}");
                             }
+                        }
+                        else if (selector == "p")
+                        {
+                            // 对于<h1>元素，获取文本内容，并添加 "title:" 前缀
+                            string pText = element.Text;
+                            if (!string.IsNullOrEmpty(pText))
+                            {
+                                allTitles.Add($"contentText: {pText}");
+                            }
+                        }
+                        else if (selector == "img")
+                        {
+                            //string src = element.GetAttribute("src");
+                            //allTitles.Add($"src: {src}");
+                            // 如果找到<img>元素，增加计数器
+                            imageCount++;
+
+                            // 如果计数器等于3，表示找到第三张图像
+                            if (imageCount == 4)
+                            {
+                                string src = element.GetAttribute("src");
+                                if (!string.IsNullOrEmpty(src))
+                                {
+                                    allTitles.Add($"src: {src}");
+                                }
+                                break; // 退出内部的 foreach 循环
+                            }
+
+
+
+
+                            //// 对于<img>元素，获取src属性并添加到列表，然后停止遍历
+                            //string src = element.GetAttribute("src");
+                            //if (!string.IsNullOrEmpty(src))
+                            //{
+                            //    allTitles.Add($"src: {src}");
+                            //    foundFirstImage = true; // 设置标志变量为 true，表示已经找到第一个图片
+                            //    break; // 退出内部的 foreach 循环
+                            //}
                         }
                         else
                         {
