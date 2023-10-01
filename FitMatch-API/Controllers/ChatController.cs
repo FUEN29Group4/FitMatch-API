@@ -51,28 +51,28 @@ namespace FitMatch_API.Controllers
             var photo = await _db.QuerySingleOrDefaultAsync<string>(sql, parameter);
             return Ok(new { Photo = photo });
         }
-        [HttpGet("GetNewMessages/{senderId}/{receiverId}")]
-        public async Task<IActionResult> GetNewMessages(int senderId, int receiverId)
-        {
-            // 查询新消息的 SQL 查询语句，你需要根据你的数据库架构来自定义
-            string sql = @"
-        SELECT * FROM CustomerService
-        WHERE SenderId = @ReceiverId AND ReceiverId = @SenderId AND IsRead = 0
-        ORDER BY DateTime ASC";
+        //[HttpGet("GetNewMessages/{senderId}/{receiverId}")]
+        //public async Task<IActionResult> GetNewMessages(int senderId, int receiverId)
+        //{
+        //    // 查询新消息的 SQL 查询语句，你需要根据你的数据库架构来自定义
+        //    string sql = @"
+        //SELECT * FROM CustomerService
+        //WHERE SenderId = @ReceiverId AND ReceiverId = @SenderId AND IsRead = 0
+        //ORDER BY DateTime ASC";
 
-            var parameters = new { SenderId = senderId, ReceiverId = receiverId };
-            var newMessages = await _db.QueryAsync<CustomerService>(sql, parameters);
+        //    var parameters = new { SenderId = senderId, ReceiverId = receiverId };
+        //    var newMessages = await _db.QueryAsync<CustomerService>(sql, parameters);
 
-            // 将新消息标记为已读
-            sql = @"
-        UPDATE CustomerService
-        SET IsRead = 1
-        WHERE SenderId = @ReceiverId AND ReceiverId = @SenderId AND IsRead = 0";
+        //    // 将新消息标记为已读
+        //    sql = @"
+        //UPDATE CustomerService
+        //SET IsRead = 1
+        //WHERE SenderId = @ReceiverId AND ReceiverId = @SenderId AND IsRead = 0";
 
-            await _db.ExecuteAsync(sql, parameters);
+        //    await _db.ExecuteAsync(sql, parameters);
 
-            return Ok(newMessages);
-        }
+        //    return Ok(newMessages);
+        //}
 
         //[HttpGet("SessionInfo")]
         //public IActionResult GetSessionInfo()

@@ -49,14 +49,14 @@ namespace FitMatch_API.Hubs
 
         public async Task SendMessage(int receiverId, string message, string senderId, string role)
         {
-
+            var currentTime = DateTime.Now; // 獲取當前時間
             var formattedMessage = $"{message}";
-            await Clients.All.SendAsync("ReceiveMessage", senderId, formattedMessage, role);
+            await Clients.All.SendAsync("ReceiveMessage", senderId, formattedMessage, role, currentTime.ToString("HH:mm:ss"));
 
 
             CustomerService customerService = new CustomerService
                 {
-                    DateTime = DateTime.Now,
+                    DateTime = currentTime,
                     MessageContent = message,
                     SenderId = int.Parse(senderId),
                     ReceiverId = receiverId,
