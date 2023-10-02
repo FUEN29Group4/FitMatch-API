@@ -175,7 +175,7 @@ namespace FitMatch_API.Controllers
                 //PaymentMethod = orderViewModel.PaymentMethod,
                 //ShippingMethod = orderViewModel.ShippingMethod,
                 PaymentMethod = "信用卡", //這裡串接上金流後要修
-                ShippingMethod = "宅配",//這裡串接上金流後要修
+                ShippingMethod = "超商取貨",//這裡串接上金流後要修
                 PayTime = DateTime.Now,//這裡串接上金流後要修
                 Status = true //這裡串接上金流後要修
             };
