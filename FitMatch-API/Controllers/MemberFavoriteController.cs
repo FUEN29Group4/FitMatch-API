@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Data;
 using Dapper;
 using FitMatch_API.Models;
+using static FitMatch_API.Controllers.MemberFavoriteController;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,6 +24,137 @@ namespace FitMatch_API.Controllers
         {
             _context = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
         }
+
+
+
+
+
+
+
+
+
+
+
+        //============== 商品收藏 start ==========
+        [HttpPost("FavoriteProduct")]
+        public async Task<IActionResult> InsertFavoriteTrainer([FromBody] FavoriteProduct favoriteProduct)
+        {//接收教練收藏
+            if (favoriteProduct == null)
+            {
+                return BadRequest("找不到data");
+            }
+            string sql = @"insert into MemberFavorite(MemberID,ProductID) values (@MemberId,@ProductId);";
+
+            var parameters = new
+            {
+                MemberId = favoriteProduct.MemberId,
+                ProductId = favoriteProduct.ProductId,
+            };
+            try
+            {
+                int rowsAffected = await _context.ExecuteAsync(sql, parameters);
+
+                if (rowsAffected > 0)
+                {
+                    return Ok(new
+                    {
+                        status = "success",
+                        message = "商品收藏成功"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    status = "error",
+                    message = $"内部服务器错误: {ex.Message}"
+                });
+            }
+
+            return BadRequest("商品無法加入收藏");
+        }
+        // 接收的模型
+        public class FavoriteProduct
+        {
+            public int MemberId { get; set; }
+            public int ProductId { get; set; }
+        }
+
+
+
+
+
+
+
+        [HttpGet("GetFavoriteProduct/{id}")]
+        public async Task<IActionResult> GetFavoriteProduct(int id)
+        {//查詢收藏
+            try
+            {
+                // Your SQL query to retrieve all records for the given MemberId
+                string sqlQuery = "SELECT * FROM MemberFavorite WHERE MemberId = @MemberId AND (TrainerId IS NOT NULL OR ProductId IS NOT NULL)";
+
+                // Execute the query using Dapper
+                var favoriteRecords = await _context.QueryAsync<SimpleMemberFavorite>(sqlQuery, new { MemberId = id });
+
+                if (favoriteRecords != null && favoriteRecords.Any())
+                {
+                    var response = new
+                    {
+                        status = "success",
+                        message = "商品收藏查詢成功",
+                        data = favoriteRecords
+                    };
+
+                    return Ok(favoriteRecords);
+                }
+                else
+                {
+                    var response = new
+                    {
+                        status = "error",
+                        message = "找不到具有TrainerId或ProductId的紀錄"
+                    };
+                    return NotFound(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                var response = new
+                {
+                    status = "error",
+                    message = $"內部服務器錯誤: {ex.Message}"
+                };
+                return StatusCode(500, response);
+            }
+        }
+        //自訂模型 因為原本模型太多東西了
+        public class SimpleMemberFavorite
+        {
+            public int MemberFavoriteId { get; set; }
+            public int? MemberId { get; set; }
+            public int? TrainerId { get; set; }
+            public int? ProductId { get; set; }
+        }
+
+
+
+
+
+        //============== 商品收藏 end  ==========
+
+
+
+
+
+
+
+
+
+
+
+
 
         // 讀取所有MemberFavorite列表資料 => ok
         // GET: api/<MemberFavoriteController>
