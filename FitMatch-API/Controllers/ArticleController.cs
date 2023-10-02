@@ -250,7 +250,13 @@ namespace FitMatch_API.Controllers
                 {
                     // 获取当前选择器对应的元素列表
                     var elements = driver.FindElements(By.CssSelector(selector));
+                    // 使用 XPath 选择标签为 <h1> 的元素
+                    //elements = driver.FindElements(By.XPath("//h1"));
                     var imageCount = 0;
+                    //var titleCount = 0;
+                    ////使用 XPath 选择仅包含纯文本内容的<p> 元素
+                    //elements = driver.FindElements(By.XPath("//p[not(*)]"));
+
 
                     foreach (var element in elements)
                     {
@@ -258,19 +264,34 @@ namespace FitMatch_API.Controllers
                         if (selector == "h1")
                         {
                             // 对于<h1>元素，获取文本内容，并添加 "title:" 前缀
-                            string h1Text = element.Text;
-                            if (!string.IsNullOrEmpty(h1Text))
-                            {
-                                allTitles.Add($"title: {h1Text}");
-                            }
+                                string h1Text = element.Text;
+                                if (!string.IsNullOrEmpty(h1Text))
+                                {
+                                    allTitles.Add($"title: {h1Text}");
+                                }
+                            //titleCount++;
+
+                            //// 如果计数器等于3，表示找到第三张图像
+                            //if (titleCount == 5)
+                            //{
+                               
+                            //    break; // 退出内部的 foreach 循环
+                            //}
                         }
                         else if (selector == "p")
                         {
-                            // 对于<h1>元素，获取文本内容，并添加 "title:" 前缀
-                            string pText = element.Text;
-                            if (!string.IsNullOrEmpty(pText))
+
+                            var classAttribute = element.GetAttribute("class");
+
+                            // 如果 class 属性为空或只包含空格，表示没有其他类别样式
+                            if (string.IsNullOrWhiteSpace(classAttribute))
                             {
-                                allTitles.Add($"contentText: {pText}");
+                                // 获取 <p> 元素的文本内容，并添加到列表中
+                                string pText = element.Text;
+                                if (!string.IsNullOrEmpty(pText))
+                                {
+                                    allTitles.Add($"contentText: {pText}");
+                                }
                             }
                         }
                         else if (selector == "img")
